@@ -9,8 +9,9 @@
 class Dynamics
 {
     public:
-    Dynamics(a1Robot *robot):_robot(robot)
+    Dynamics(Robot *robot)
     {
+        _robot = robot;
         _NB = robot->_NB;
         _NL = robot->_NL;
         _q = robot->_q;
@@ -62,10 +63,17 @@ class Dynamics
     MatX Cal_Generalize_Bias_force(bool Gra_offset);
     MatX Cal_Generalize_Bias_force_Flt(bool Gra_offset);
     MatX Cal_Gravity_Term();
-    MatX Cal_Geometric_Jacobain(int ib, Coordiante coordinate);
+    MatX Cal_Geometric_Jacobain(int ib, Coordiante coordinate, bool CHAIN);
     MatX Cal_K_Flt(MatX &k);
 
-    a1Robot *_robot;
+    MatX Cal_inverse_kinematic();
+
+    void set_isUpdate()
+    {
+        _robot->_isUpdated = false;
+    }
+
+    Robot *_robot;
     double *_q;
     double *_dq;
 

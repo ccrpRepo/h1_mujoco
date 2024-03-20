@@ -1,5 +1,7 @@
 <mujoco model="h1">
   <compiler angle="radian" meshdir="meshes"/>
+  <size njmax="500" nconmax="100" />
+    <option gravity='0 0 0' iterations='50' solver='PGS' timestep='0.001'/>
 
   <default>
     <default class="h1">
@@ -246,8 +248,16 @@
     <jointvel name="right_shoulder_yaw_vel"    joint="right_shoulder_yaw_joint"/>
     <jointvel name="right_elbow_vel"    joint="right_elbow_joint"/>
 
-    <gyro name="imu-angular-velocity" site="imu" noise="5e-4" cutoff="34.9"/>
-    <accelerometer name="imu-linear-acceleration" site="imu" noise="1e-2" cutoff="157"/>
+    <!-- <gyro name="imu-angular-velocity" site="imu" noise="5e-4" cutoff="34.9"/>
+    <accelerometer name="imu-linear-acceleration" site="imu" noise="1e-2" cutoff="157"/> -->
+
+    <accelerometer name="Body_Acc" site="imu" noise="1e-2" cutoff="157"/>
+
+    <gyro name="Body_Gyro" site="imu" noise="5e-4" cutoff="34.9"/>
+
+    <framepos name="Body_Pos" objtype=site objname="imu"/>
+
+    <framequat name="Body_Quat" objtype=site objname="imu"/>
   </sensor>
 
   <keyframe>

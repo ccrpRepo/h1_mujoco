@@ -34,7 +34,7 @@ file(GLOB_RECURSE SRC_LIST
 )
 
 add_executable(${BIN_NAME}
-src/dytest.cpp
+src/h1test.cpp
 ${SRC_LIST}
 )
 

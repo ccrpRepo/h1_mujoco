@@ -537,7 +537,16 @@ void h1Robot::witre_urdfData()
         rpy[i].setIdentity(3, 3);
     }
 
-    xyz[0] << 0, 0.0875, -0.1742;
+    Eigen::Quaterniond quad1(0.976296, 0.216438, 0, 0);
+    rpy[11] = quad1.matrix();
+    Eigen::Quaterniond quad2(0.976296, -0.216438, 0, 0);
+    rpy[12] = quad2.matrix();
+    Eigen::Quaterniond quad3(0.976296, -0.216438, 0, 0);
+    rpy[15] = quad3.matrix();
+    Eigen::Quaterniond quad4(0.976296, 0.216438, 0, 0);
+    rpy[16] = quad4.matrix();
+
+    xyz[0]<< 0, 0.0875, -0.1742;
     xyz[1] << 0.039468, 0, 0;
     xyz[2] << 0, 0.11536, 0;
     xyz[3] << 0, 0, -0.4;
@@ -568,4 +577,91 @@ void h1Robot::witre_urdfData()
 
     JointType fltjt = JointType::FLOATING;
     _urdf->_urfltjoint = new urjoint(JointType::FLOATING, Mat3::Identity(), Vec3::Zero());
+}
+
+void h1Robot::build_h1()
+{
+    int parentset[19] = {-1,0,1,2,3, 
+                         -1,5,6,7,8,
+                         -1,
+                          10,11,12,13,
+                          10,15,16,17};
+    // number the parent set
+    for (int i = 0; i < _NB; i++)
+    {
+        _parent[i] = parentset[i];
+    }
+
+    //Floating base settings
+    _base->set_BaseType(BaseType::Floating);
+    _base->set_mcI(_urdf->_urbase);
+    _base->_fltjoint = new FltJoint(_urdf->_urfltjoint);
+    _base->_fltjoint->_T_Base2Wrd.setIdentity();
+    _base->_fltjoint->_T_Wrd2Base.setIdentity();
+    _base->_fltjoint->_X_Base2Wrd.setIdentity();
+    _base->_fltjoint->_X_Wrd2Base.setIdentity();
+    _quat_xyz[0] = 1.0f;
+    _quat_xyz[1] = 0.0f;
+    _quat_xyz[2] = 0.0f;
+    _quat_xyz[3] = 0.0f;
+    _quat_xyz[4] = 0.0f;
+    _quat_xyz[5] = 0.0f;
+    _quat_xyz[6] = 0.0f;
+
+    for (int i = 0; i < _NB; i++)
+    {
+        _body[i].set_mcI(_urdf->_urbody[i]);
+        _joint[i].set_type(_urdf->_urjoint[i]->_jt);
+        _joint[i].set_rpy_xyz(_urdf->_urjoint[i]->_rpyMat,
+                              _urdf->_urjoint[i]->_xyz);
+        Rp2T(_joint[i]._rpyMat, _joint[i]._xyz, Tj[i]);
+        AdjointT(Tj[i], Xj[i]);
+        _q[i] = 0.0;
+        Tq[i] = roz(_q[i]);
+        T_dwtree[i] = Tj[i] * Tq[i];
+    }
+
+    // loop joint settings
+    Mat3 rpy_lp;
+    Vec3 xyz_lp;
+    rpy_lp << 1, 0, 0,
+        0, 1, 0,
+        0, 0, 1;
+    xyz_lp << 0, 0, -0.05;
+
+    for (int i = 0; i < _NL; i++)
+    {
+        _lpjoint[i]._pre = WORLD;
+        _lpjoint[i].T.setZero(6, 5);
+        _lpjoint[i].T << 0, 0, 0, 0, 0,
+                         1, 0, 0, 0, 0,
+                         0, 1, 0, 0, 0,
+                         0, 0, 1, 0, 0,
+                         0, 0, 0, 1, 0,
+                         0, 0, 0, 0, 1;
+        _lpjoint[i]._DOF = 1;
+        Rp2T(rpy_lp, xyz_lp, _lpjoint[i].Ts);
+        AdjointT(_lpjoint[i].Ts, _lpjoint[i].Xs);
+        Mat3 R_t = rpy_lp.transpose();
+        Vec3 xyz_t = (-R_t) * xyz_lp;
+        Rp2T(R_t, xyz_t, _lpjoint[i].Ts_1);
+        AdjointT(_lpjoint[i].Ts_1, _lpjoint[i].Xs_1);
+
+        Rp2T(Mat3::Identity(), Vec3::Zero(), _lpjoint[i].Tp);
+        Rp2T(Mat3::Identity(), Vec3::Zero(), _lpjoint[i].Tp_1);
+        AdjointT(_lpjoint[i].Tp, _lpjoint[i].Xp);
+        AdjointT(_lpjoint[i].Tp_1, _lpjoint[i].Xp_1);
+    }
+
+    _lpjoint[0]._suc = 4;
+    _lpjoint[1]._suc = 9;
+
+    // Update_Model();
+    std::cout
+        << std::endl
+        << "Model building completed! NB = " << _NB << " NL = " << _NL << std::endl;
+    std::cout << "The parent set is [ ";
+    for (int i = 0; i < _NB; i++)
+        std::cout << _parent[i] << " ";
+    std::cout << "]" << std::endl;
 }

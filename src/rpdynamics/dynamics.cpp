@@ -393,7 +393,7 @@ MatX Dynamics::Cal_Gravity_Term()
 // Coordinate: Either be INERTIAL_COORDINATE or BODY_COORDINATE
 //             if choose INERTIAL_COORDINATE, then will calculte space Jacobian
 //             if choose BODY_COORDINATE, then will calculte body Jacobian
-MatX Dynamics::Cal_Geometric_Jacobain(int ib, Coordiante coordinate)
+MatX Dynamics::Cal_Geometric_Jacobain(int ib, Coordiante coordinate, bool CHAIN)
 {
     _robot->Update_Model();
     MatX J;
@@ -415,7 +415,7 @@ MatX Dynamics::Cal_Geometric_Jacobain(int ib, Coordiante coordinate)
     {
         k[num - 1 - i] = k_temp[i];
     }
-    // Jacobian of body ib repesent at inertial frame
+    // Jacobian of body ib repesent at base frame
     if (coordinate == Coordiante::BASE) // Base numbered -1
     {
         Eigen::Matrix<double, 6, 6> X_down;
