@@ -594,3 +594,131 @@ MatX Dynamics::Cal_K_Flt(MatX &k)
 
     return K;
 }
+
+MatX Dynamics::Cal_inverse_kinematic(Mat4 Td, int ib)
+{
+    int iter = 10;
+    MatX J;
+    MatX J_T;
+    MatX J_TJ;
+    MatX J_pesuinv;
+    Mat4 T_err;
+    Mat4 V_cross;
+    Vec6 V_err;
+    
+    Mat4 *Tq;
+    Mat6 *Xq;
+    Mat4 *T_dwtree;
+    Mat6 *X_dwtree;
+
+    MatX q_cur;
+    MatX detaq;
+    MatX Ixx;
+
+    double err;
+
+    _robot->Update_Model();
+
+    // initial k set
+    int *k, *k_temp;
+    k = new int[_NB];
+    k_temp = new int[_NB];
+    int j = ib;
+    int num = 0;
+    while (j >= 0)
+    {
+        k_temp[num] = j;
+        j = _parent[j];
+        num++;
+    }
+    for (int i = num - 1; i >= 0; --i)
+    {
+        k[num - 1 - i] = k_temp[i];
+    }
+    J.setZero(6, num);
+    J_T.setZero(num, 6);
+    J_TJ.setZero(6, 6);
+    J_pesuinv.setZero(num, 6);
+    q_cur.setZero(num, 1);
+    detaq.setZero(num, 1);
+    Tq = new Mat4[num];
+    Xq = new Mat6[num];
+    T_dwtree = new Mat4[num];
+    X_dwtree = new Mat6[num];
+    Ixx.setIdentity(num, num);
+    for (int i = 0; i < num; i++)
+    {
+        q_cur(i) = _robot->_q[k[i]];
+    }
+    while (iter > 0)
+    {
+        iter--;
+        Mat6 X_cur;
+        Mat4 T_cur;
+        T_cur.setIdentity(4, 4);
+        X_cur.setIdentity(6, 6);
+        // for (int i = 0; i < num;i++)
+        // {
+        //     std::cout << k[i] << " ";
+        // }
+        // std::cout << std::endl;
+        for (int i = 0; i < num; i++)
+        {
+            if (_joint[k[i]]._jtype == JointType::RZ)
+            {
+                Xq[i] = Xrotz(q_cur(i)); // X_down
+                Tq[i] = roz(q_cur(i));   // T_down
+            }
+            else if (_joint[k[i]]._jtype == JointType::RX)
+            {
+                Xq[i] = Xrotx(q_cur(i)); // X_down
+                Tq[i] = rox(q_cur(i));   // T_down
+            }
+            else if (_joint[k[i]]._jtype == JointType::RY)
+            {
+                Xq[i] = Xroty(q_cur(i)); // X_down
+                Tq[i] = roy(q_cur(i));   // T_down
+            }
+
+            X_dwtree[i] = _robot->Xj[k[i]] * Xq[i];
+            T_dwtree[i] = _robot->Tj[k[i]] * Tq[i];
+        }
+
+        for (int i = 0; i < num; i++)
+        {
+            T_cur = T_cur * T_dwtree[i];
+            X_cur = X_cur * X_dwtree[i];
+            J.block(0, i, 6, 1) = X_cur * _joint[k[i]]._S_Body;
+        }
+        T_err = T_cur.inverse() * Td;
+        V_cross = logm(T_err);
+        // V_cross(0, 2), -V_cross(0, 1)
+        V_err
+            << -V_cross(1, 2), //-V_cross(1, 2) V_cross(0, 2), -V_cross(0, 1)
+            V_cross(0, 2), -V_cross(0, 1), V_cross(0, 3), V_cross(1, 3), V_cross(2, 3);
+        // std::cout << "V_err:" << std::endl
+        //           << V_err.transpose() << std::endl;
+        J_T = J.transpose();
+        J_TJ = J_T * J;
+        // if (J_TJ.determinant()<0.00001)
+        // {
+        //     J_TJ += Ixx * 0.00001;
+        // }
+        // std::cout << "dete:" << J_TJ.determinant() << std::endl;
+        // Eigen::JacobiSVD<Eigen::MatrixXd> svd(J_TJ);
+        // std::cout << "rank of JTJ: " << svd.rank() << std::endl;
+        J_pesuinv = J_TJ.inverse() * J_T;
+        detaq = J_pesuinv * V_err;
+        q_cur += detaq;
+        err = V_err.norm();
+        if ( err < 0.0001)
+        {
+            // std::cout << "iter: " << 10-iter << std::endl;
+            break;
+        }
+            
+    }
+    std::cout << "err: " << err << std::endl;
+    return q_cur;
+}
+

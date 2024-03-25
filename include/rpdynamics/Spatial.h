@@ -19,4 +19,6 @@ Mat6 crm(Vec6 v);
 Mat6 crf(Vec6 v);
 void Rp2T(Mat3 R, Vec3 p, Mat4 &T);
 void AdjointT(Mat4 T, Mat6 &X);
+
+Mat4 logm(Mat4 T);
 #endif

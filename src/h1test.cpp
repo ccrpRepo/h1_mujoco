@@ -7,6 +7,8 @@
 #include "rpdynamics/dynamics.h"
 #include "interface/IOmujoco.h"
 
+using namespace std;
+
 std::string _robot_name;
 
 mjModel *m;
@@ -144,9 +146,47 @@ int main(int argc, char** argv)
     h1Robot *h1 = new h1Robot();
     Dynamics *dy = new Dynamics(h1);
 
-    while(running)
+    // xyz
+    d->qpos[0] = 0;
+    d->qpos[1] = 0;
+    d->qpos[2] = 1.5;
+    // quat
+    d->qpos[3] = 1;
+    d->qpos[4] = 0;
+    d->qpos[5] = 0;
+    d->qpos[6] = 0;
+    // left leg
+    d->qpos[7] = 0; // -0.43 ~ 0.43
+    d->qpos[8] = 0; // -0.43 ~ 0.43
+    d->qpos[9] = -0.4; // -1.57 ~ 1.57
+    d->qpos[10] = 0.8; // -0.26 ~ 2.05
+    d->qpos[11] = -0.4; // -0.87 ~ 0.52
+    // right leg
+    d->qpos[12] = 0; // -0.43 ~ 0.43
+    d->qpos[13] = 0; // -0.43 ~ 0.43
+    d->qpos[14] = 0; // -1.57 ~ 1.57
+    d->qpos[15] = 0;  // -0.26 ~ 2.05
+    d->qpos[16] = 0; // -0.87 ~ 0.52
+    // torso
+    d->qpos[17] = 0; // -2.35 ~ 2.35
+    // left arm
+    d->qpos[18] = 0; // -2.87 ~ 2.87
+    d->qpos[19] = 0; // -0.34 ~ 3.11
+    d->qpos[20] = 0; // -1.3 ~ 4.45
+    d->qpos[21] = 0; // -1.25 ~ 2.61
+    // right arm
+    d->qpos[22] = 0; // -2.87 ~ 2.87
+    d->qpos[23] = 0; // -0.34 ~ 3.11
+    d->qpos[24] = 0; // -1.3 ~ 4.45
+    d->qpos[25] = 0; // -1.25 ~ 2.61
+    while (running)
     {
         running = !glfwWindowShouldClose(window);
+        double phase = 0;
+        double swing_time = 2;
+        MatX qd;
+        qd.setZero(5, 1);
+        Mat4 Td, Te;
         mjtNum simstart = d->time;
         while ((d->time - simstart) < 1.0 / 60.0)
         {
@@ -154,39 +194,86 @@ int main(int argc, char** argv)
             // xyz
             d->qpos[0] = 0;
             d->qpos[1] = 0;
-            d->qpos[2] = 0.98;
+            d->qpos[2] = 1.5;
             // quat
             d->qpos[3] = 1;
             d->qpos[4] = 0;
             d->qpos[5] = 0;
             d->qpos[6] = 0;
             // left leg
-            d->qpos[7] = 0.43; // -0.43 ~ 0.43
-            d->qpos[8] = 0.43; // -0.43 ~ 0.43
-            d->qpos[9] = -1.57; // -1.57 ~ 1.57
-            d->qpos[10] = -0.26; // -0.26 ~ 2.05
-            d->qpos[11] = -0.62; // -0.87 ~ 0.52
+            d->qpos[7] = qd(0); // -0.43 ~ 0.43
+            d->qpos[8] = qd(1); // -0.43 ~ 0.43
+            d->qpos[9] = qd(2); // -1.57 ~ 1.57
+            d->qpos[10] = qd(3); // -0.26 ~ 2.05
+            d->qpos[11] = qd(4); // -0.87 ~ 0.52
             // right leg
             d->qpos[12] = 0; // -0.43 ~ 0.43
             d->qpos[13] = 0; // -0.43 ~ 0.43
-            d->qpos[14] = -0.4; // -1.57 ~ 1.57
-            d->qpos[15] = 0.8;  // -0.26 ~ 2.05
-            d->qpos[16] = -0.4; // -0.87 ~ 0.52
+            d->qpos[14] = 0; // -1.57 ~ 1.57
+            d->qpos[15] = 0;  // -0.26 ~ 2.05
+            d->qpos[16] = 0; // -0.87 ~ 0.52
             // torso
-            d->qpos[17] = 2.35; // -2.35 ~ 2.35
+            d->qpos[17] = 0; // -2.35 ~ 2.35
             // left arm
-            d->qpos[18] = 2.87; // -2.87 ~ 2.87
-            d->qpos[19] = 3.11; // -0.34 ~ 3.11
-            d->qpos[20] = 4.45; // -1.3 ~ 4.45
-            d->qpos[21] = 2.61; // -1.25 ~ 2.61
+            d->qpos[18] = 0; // -2.87 ~ 2.87
+            d->qpos[19] = 0; // -0.34 ~ 3.11
+            d->qpos[20] = 0; // -1.3 ~ 4.45
+            d->qpos[21] = 0; // -1.25 ~ 2.61
             // right arm
             d->qpos[22] = 0; // -2.87 ~ 2.87
             d->qpos[23] = 0; // -0.34 ~ 3.11
             d->qpos[24] = 0; // -1.3 ~ 4.45
             d->qpos[25] = 0; // -1.25 ~ 2.61
 
+            for (int i = 0; i < 19; i++)
+            {
+                dy->_robot->_q[i] = d->qpos[i+7];
+            }
+            dy->_robot->Update_Model();
+
+            Te.setIdentity(4, 4);
+            for (int i = 0; i < 5; i++)
+            {
+                Te = Te * dy->_robot->T_dwtree[i];
+            }
+            // cout << "Te: " << endl
+            //      << Te << endl;
+            
+            // qpos[10] = 1 qpos[9] = 1
+            // Td << -0.416147, 0, 0.909297, -0.660839,
+            //     0, 1, 0, 0.20286,
+            //     -0.909297, 0, -0.416147, -0.223862,
+            //     0, 0, 0, 1;
+
+            // Td << 0.995004, 0, 0.0998334, -0.000465367,
+            //     0, 1, 0, 0.20286,
+            //     -0.0998334, 0, 0.995004, -0.972202,
+            //     0, 0, 0, 1;
+            phase = d->time / swing_time;
+            double p = phase - (int)phase;
+            Vec3 Xe;
+            Xe << 1, 0, 0;
+            Vec3 pos_start,pos_end,pos_cur;
+            pos_end << 0, 0.1, -0.9;
+
+            pos_start = Te.block(0, 3, 3, 1);
+            pos_cur = (1 - p) * pos_start + p * pos_end;
+
+            Td = Te;
+            Td.block(0, 0, 3, 1) = Xe;
+            Td.block(0, 3, 3, 1) = pos_cur;
+
+            qd = dy->Cal_inverse_kinematic(Td, 4);
+
+
+
+            cout << "qd: " << endl
+                 << qd.transpose() << endl;
+            
+            
+
             /* --------------------------*********TEST CODE END***********----------------------------*/
-            dy->set_isUpdate();
+            dy->set_isUpdated();
             mj_step(m, d);
         }
         // get framebuffer viewport

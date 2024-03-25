@@ -627,7 +627,7 @@ void h1Robot::build_h1()
     rpy_lp << 1, 0, 0,
         0, 1, 0,
         0, 0, 1;
-    xyz_lp << 0, 0, -0.05;
+    xyz_lp << 0, 0, -0.07;
 
     for (int i = 0; i < _NL; i++)
     {

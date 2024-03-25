@@ -75,6 +75,7 @@ using Mat12 = typename Eigen::Matrix<double, 12, 12>;
 // Dynamic Size Matrix
 using MatX = typename Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 
+// using MatXcd = typename Eigen::MatrixXcd;
 /************************/
 /****** Functions *******/
 /************************/

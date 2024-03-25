@@ -173,3 +173,25 @@ void Rp2T(Mat3 R, Vec3 p, Mat4 &T)
     T.block(0, 0, 3, 3) = R;
     T.block(0, 3, 3, 1) = p;
 }
+
+Mat4 logm(Mat4 T)
+{
+    Mat3 R = T.block(0, 0, 3, 3);
+    Eigen::EigenSolver<Mat3> es(R);
+    Eigen::MatrixXcd V = es.eigenvectors();
+    Eigen::MatrixXcd D = es.eigenvalues();
+
+    Eigen::MatrixXcd log_D = D.array().log();
+    Eigen::MatrixXcd log_D_dia = log_D.asDiagonal();
+    Eigen::MatrixXcd R_tan = V * log_D_dia * V.inverse();
+    Mat3 Rt_tan_real = R_tan.real();
+
+    Vec3 T_tan = T.block(0, 3, 3, 1);
+
+    Mat4 log_T;
+    log_T.setZero();
+    log_T.block(0, 0, 3, 3) = Rt_tan_real;
+    log_T.block(0, 3, 3, 1) = T_tan;
+
+    return log_T;
+}

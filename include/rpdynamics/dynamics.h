@@ -21,6 +21,8 @@ class Dynamics
 
         _X_dwtree = robot->X_dwtree;
         _X_uptree = robot->X_uptree;
+        _T_dwtree = robot->T_dwtree;
+        _T_uptree = robot->T_uptree;
 
         _v = new Vec6[robot->_NB];
         _avp = new Vec6[robot->_NB];
@@ -51,6 +53,8 @@ class Dynamics
         _robot->Update_Model();
         _X_dwtree = _robot->X_dwtree;
         _X_uptree = _robot->X_uptree;
+        _T_dwtree = _robot->T_dwtree;
+        _T_uptree = _robot->T_uptree;
     }
     MatX inverse_dynamic_FixedBase(double _ddq[],
                                    bool Gra_offset);
@@ -66,9 +70,9 @@ class Dynamics
     MatX Cal_Geometric_Jacobain(int ib, Coordiante coordinate, bool CHAIN);
     MatX Cal_K_Flt(MatX &k);
 
-    MatX Cal_inverse_kinematic();
+    MatX Cal_inverse_kinematic(Mat4 Td, int ib);
 
-    void set_isUpdate()
+    void set_isUpdated()
     {
         _robot->_isUpdated = false;
     }
@@ -81,6 +85,8 @@ class Dynamics
 
     Mat6 *_X_dwtree; // body(i) coordinate respect to body(i-1) coordinate
     Mat6 *_X_uptree; // body(i-1) coordinate respect to body(i) coordinate
+    Mat4 *_T_dwtree;  // body(i) coordinate respect to body(i-1) coordinate
+    Mat4 *_T_uptree;  // body(i-1) coordinate respect to body(i) coordinate
 
     Vec6 *_v;
     Vec6 *_a;
