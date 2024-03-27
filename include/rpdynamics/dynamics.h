@@ -70,7 +70,8 @@ class Dynamics
     MatX Cal_Geometric_Jacobain(int ib, Coordiante coordinate, bool CHAIN);
     MatX Cal_K_Flt(MatX &k);
 
-    MatX Cal_inverse_kinematic(Mat4 Td, int ib);
+    MatX Cal_inverse_kinematic_Numerical(Mat4 Td, int ib);
+    MatX Cal_inverse_kinematic_Analytical(Vec5 endposyawpitch, int endid);
 
     void set_isUpdated()
     {

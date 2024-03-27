@@ -117,7 +117,7 @@ void Init_window()
     cam.lookat[2] = arr_view[5];
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     IOinterface *ioInter;
     CtrlPlatform ctrlPlat;
@@ -141,9 +141,7 @@ int main(int argc, char** argv)
     }
 
     d = mj_makeData(m);
-    
 
-    
     Init_window();
     ioInter = new IOmujoco(d);
     ctrlPlat = CtrlPlatform::MUJOCO;
@@ -161,14 +159,14 @@ int main(int argc, char** argv)
     // d->qpos[5] = 0;
     // d->qpos[6] = 0;
     // left leg
-    d->qpos[7 - 7] = 0; // -0.43 ~ 0.43
-    d->qpos[8 - 7] = 0; // -0.43 ~ 0.43
-    d->qpos[9 - 7] = -0.4; // -1.57 ~ 1.57
-    d->qpos[10 - 7] = 0.8; // -0.26 ~ 2.05
+    d->qpos[7 - 7] = 0;     // -0.43 ~ 0.43
+    d->qpos[8 - 7] = 0;     // -0.43 ~ 0.43
+    d->qpos[9 - 7] = -0.4;  // -1.57 ~ 1.57
+    d->qpos[10 - 7] = 0.8;  // -0.26 ~ 2.05
     d->qpos[11 - 7] = -0.4; // -0.87 ~ 0.52
     // right leg
-    d->qpos[12 - 7] = 0; // -0.43 ~ 0.43
-    d->qpos[13 - 7] = 0; // -0.43 ~ 0.43
+    d->qpos[12 - 7] = 0;    // -0.43 ~ 0.43
+    d->qpos[13 - 7] = 0;    // -0.43 ~ 0.43
     d->qpos[14 - 7] = -0.4; // -1.57 ~ 1.57
     d->qpos[15 - 7] = 0.8;  // -0.26 ~ 2.05
     d->qpos[16 - 7] = -0.4; // -0.87 ~ 0.52
@@ -195,10 +193,10 @@ int main(int argc, char** argv)
         running = !glfwWindowShouldClose(window);
         double phase = 0;
         double swing_time = 2;
-        MatX qd_left,qd_righ;
+        MatX qd_left, qd_righ;
         qd_left.setZero(5, 1);
         qd_righ.setZero(5, 1);
-        Mat4 Te_l,Te_r;
+        Mat4 Te_l, Te_r;
         mjtNum simstart = d->time;
         while ((d->time - simstart) < 1.0 / 60.0)
         {
@@ -225,7 +223,7 @@ int main(int argc, char** argv)
             // d->qpos[15] = qd_righ(3); // -0.26 ~ 2.05
             // d->qpos[16] = qd_righ(4); // -0.87 ~ 0.52
             // torso
-            d->qpos[17-7] = 0; // -2.35 ~ 2.35
+            d->qpos[17 - 7] = 0; // -2.35 ~ 2.35
             // left arm
             d->qpos[18 - 7] = 0; // -2.87 ~ 2.87
             d->qpos[19 - 7] = 0; // -0.34 ~ 3.11

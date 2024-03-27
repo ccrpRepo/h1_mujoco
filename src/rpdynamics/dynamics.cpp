@@ -595,7 +595,7 @@ MatX Dynamics::Cal_K_Flt(MatX &k)
     return K;
 }
 
-MatX Dynamics::Cal_inverse_kinematic(Mat4 Td, int ib)
+MatX Dynamics::Cal_inverse_kinematic_Numerical(Mat4 Td, int ib)
 {
     int iter = 10;
     MatX J;
@@ -722,3 +722,168 @@ MatX Dynamics::Cal_inverse_kinematic(Mat4 Td, int ib)
     return q_cur;
 }
 
+// inverse kinematic off coordinate pelvis
+// endposyawpitch: pos(0~2) yaw(3) pitch(4)
+// endid: left_leg(0) right_leg(1) left_arm(2) right_arm(3)
+MatX Dynamics::Cal_inverse_kinematic_Analytical(Vec5 endposyawpitch,int endid)
+{
+    _robot->Update_Model();
+    Vec5 qd;
+    qd.setZero();
+
+    Vec3 pos = endposyawpitch.head(3);
+    double yaw = endposyawpitch(3);
+    double pitch = endposyawpitch(4);
+
+    qd(0) = yaw;
+
+    float sideSign;
+    if(endid == 0) //left leg
+    {
+        sideSign = 1;
+    }
+    else if (endid == 1) // right leg
+    {
+        sideSign = -1;
+    }
+
+    double y_hip2pelvis = 0.0875;
+    Vec3 hip2pelvis_offset;
+    hip2pelvis_offset << 0, y_hip2pelvis * sideSign, -0.1742;
+
+    Vec3 hiproll2yaw;
+    hiproll2yaw << 0.039468, 0, 0;
+
+    /******************3DoF Calculate*************************/
+    Vec3 dog_pos = pos - rox(yaw).block(0, 0, 3, 3) * hiproll2yaw - hip2pelvis_offset;
+
+    double abadLinkLength = 0.11536;
+    double hipLinkLength = 0.4;
+    double kneeLinkLength = 0.4;
+
+    float q1, q2, q3;
+    Vec3 qResult;
+    float px, py, pz;
+    float b2y, b3z, b4z, a, b, c;
+
+    px = dog_pos(0);
+    py = dog_pos(1);
+    pz = dog_pos(2);
+
+    b2y = abadLinkLength * sideSign;
+    b3z = -hipLinkLength;
+    b4z = -kneeLinkLength;
+    a = abadLinkLength;
+    c = sqrt(pow(px, 2) + pow(py, 2) + pow(pz, 2)); // whole length
+    b = sqrt(pow(c, 2) - pow(a, 2));                // distance between shoulder and footpoint
+
+    // q1 = q1_ik(py, pz, b2y);
+    float L = sqrt(pow(py, 2) + pow(pz, 2) - pow(b2y, 2));
+    q1 = atan2(pz * b2y + py * L, py * b2y - pz * L);
+
+    // q3 = q3_ik(b3z, b4z, b);
+    float temp = (pow(b3z, 2) + pow(b4z, 2) - pow(b, 2)) / (2 * fabs(b3z * b4z));
+    if (temp > 1)
+        temp = 1;
+    if (temp < -1)
+        temp = -1;
+    q3 = acos(temp);
+    q3 = (M_PI - q3); // 0~180
+
+    // q2 = q2_ik(q1, q3, px, py, pz, b3z, b4z);
+    float a1, a2, m1, m2;
+
+    a1 = py * sin(q1) - pz * cos(q1);
+    a2 = px;
+    m1 = b4z * sin(q3);
+    m2 = b3z + b4z * cos(q3);
+    q2 = atan2(m1 * a1 + m2 * a2, m1 * a2 - m2 * a1);
+
+    qd(1) = q1;
+    qd(2) = q2;
+    qd(3) = q3;
+
+    /*******************************************************/
+    Mat4 Tq[5];
+    Mat6 Xq[5];
+    Mat4 T_dwtree[5];
+    Vec5 q_cur;
+    int k[5];
+    if(endid == 0) //left leg
+    {
+        k[0] = 0;
+        k[1] = 1;
+        k[2] = 2;
+        k[3] = 3;
+        k[4] = 4;
+    }
+    if (endid == 1) // right leg
+    {
+        k[0] = 5;
+        k[1] = 6;
+        k[2] = 7;
+        k[3] = 8;
+        k[4] = 9;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        if (_joint[k[i]]._jtype == JointType::RZ)
+        {
+            Tq[i] = roz(qd(i));   // T_down
+        }
+        else if (_joint[k[i]]._jtype == JointType::RX)
+        {
+            Tq[i] = rox(qd(i));   // T_down
+        }
+        else if (_joint[k[i]]._jtype == JointType::RY)
+        {
+            Tq[i] = roy(qd(i));   // T_down
+        }
+        T_dwtree[i] = _robot->Tj[k[i]] * Tq[i];
+    }
+    Mat4 T_cur;
+    T_cur.setIdentity(4, 4);
+
+    for (int i = 0; i < 4; i++)
+    {
+        T_cur = T_cur * T_dwtree[i];
+    }
+
+    //求平底足法向向量
+    Vec3 norm_planfoot(sin(pitch), 0, cos(pitch));
+    //小腿坐标系x轴方向向量
+    Vec3 calf_xaxis = T_cur.block(0, 0, 3, 1);
+
+    //两向量夹角
+    double xita = acos(norm_planfoot.dot(calf_xaxis) / norm_planfoot.norm() * calf_xaxis.norm());
+
+    qd(4) = M_PI / 2 - xita;
+
+    if(qd(0)>0.43)
+        qd(0) = 0.429;
+    else if (qd(0) < -0.43)
+        qd(0) = -0.429;
+
+    if (qd(1) > 0.43)
+        qd(1) = 0.429;
+    else if (qd(1) < -0.43)
+        qd(1) = -0.429;
+
+    if (qd(2) > 1.57)
+        qd(2) = 1.569;
+    else if (qd(2) < -1.57)
+        qd(2) = -1.569;
+
+    if (qd(3) > 2.05)
+        qd(3) = 2.049;
+    else if (qd(3) < -0.26)
+        qd(3) = -0.259;
+
+    if (qd(4) > 0.52)
+        qd(4) = 0.519;
+    else if (qd(4) < -0.87)
+        qd(4) = -0.869;
+
+    return qd;
+
+}
