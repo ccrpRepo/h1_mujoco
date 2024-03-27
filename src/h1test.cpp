@@ -274,7 +274,7 @@ int main(int argc, char** argv)
             // cout << pos_cur_l.transpose() << endl;
             qd_left = dy->Cal_inverse_kinematic_Analytical(endposyawpitch_left, 0);
             qd_righ = dy->Cal_inverse_kinematic_Analytical(endposyawpitch_righ, 1);
-            double kp[5] = {50, 50, 50, 10, 10};
+            double kp[5] = {50, 50, 50, 30, 10};
             double kd[5] = {10, 10, 10, 10, 10};
             // if(d->time >10)
             // {

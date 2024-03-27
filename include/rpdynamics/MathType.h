@@ -27,6 +27,9 @@ using Quat = typename Eigen::Matrix<double, 4, 1>;
 // 4x1 Integer Vector
 using VecInt4 = typename Eigen::Matrix<int, 4, 1>;
 
+// 2x1 Integer Vector
+using VecInt2 = typename Eigen::Matrix<int, 2, 1>;
+
 // 12x1 Vector
 using Vec12 = typename Eigen::Matrix<double, 12, 1>;
 
@@ -65,6 +68,9 @@ using Vec32 = typename Eigen::Matrix<double, 3, 2>;
 
 // 6x6 Matrix
 using Mat6 = typename Eigen::Matrix<double, 6, 6>;
+
+// 5x2 Matrix
+using Mat52 = typename Eigen::Matrix<double, 5, 2>;
 
 // 12x12 Matrix
 using Mat12 = typename Eigen::Matrix<double, 12, 12>;

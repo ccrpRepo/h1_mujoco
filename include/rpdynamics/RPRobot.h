@@ -186,9 +186,16 @@ class h1Robot : public Robot
         urdfData *_urdf;
         Vec34 _endPfoot;
 
-        void update_footEnd();
+        Vec5 getQd(Vec5 endposyawpitch, int endid, Vec6 twist);
+        Vec5 getQ(Vec5 endposyawpitch, int endid);
+        Vec5 getTau(Vec5 q, int endid, Vec6 force);
+        Eigen::Matrix<double, 6, 5> leg_Jacobian(Vec5 q, int endid);
+        Vec6 getFootVelocity(int endid);
+        Vec6 getFeet2BVelocity(int endid, Coordiante frame);
+        Mat52 get_footEnd();
         void witre_urdfData();
         void build_h1();
+        
 
     private: 
 

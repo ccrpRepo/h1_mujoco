@@ -39,7 +39,7 @@ ${SRC_LIST}
 )
 
 add_executable(${BIN_NAME}
-src/h1test.cpp
+src/h1sys.cpp
 ${SRC_LIST}
 )
 
