@@ -6,6 +6,9 @@
 
 #include "rpdynamics/dynamics.h"
 #include "interface/IOmujoco.h"
+#include "control/CtrlComponents.h"
+#include "gait/WaveGenerator.h"
+#include "control/ControlFrame.h"
 
 using namespace std;
 
@@ -141,11 +144,19 @@ int main(int argc, char **argv)
     d = mj_makeData(m);
 
     Init_window();
-    ioInter = new IOmujoco(d);
+    ioInter = new IOmujoco(d,m);
     ctrlPlat = CtrlPlatform::MUJOCO;
 
     h1Robot *h1 = new h1Robot();
     Dynamics *dy = new Dynamics(h1);
+    CtrlComponents *ctrlComp = new CtrlComponents(ioInter, dy, d, m);
+    ctrlComp->ctrlPlatform = ctrlPlat;
+    ctrlComp->dt = 0.001; // run at 1000hz
+    ctrlComp->running = &running;
+
+    ctrlComp->waveGen = new WaveGenerator(0.5, 0.5, Vec2(0, 0.5));
+    ctrlComp->geneObj();
+    ControlFrame ctrlFrame(ctrlComp);
 
     while (running)
     {
@@ -153,7 +164,7 @@ int main(int argc, char **argv)
         mjtNum simstart = d->time;
         while ((d->time - simstart) < 1.0 / 60.0)
         {
-            dy->set_isUpdated();
+            ctrlFrame.run();
             mj_step(m, d);
         }
         // get framebuffer viewport

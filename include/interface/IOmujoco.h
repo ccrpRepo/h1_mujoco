@@ -46,7 +46,7 @@ struct mujoco_LowState
 class IOmujoco : public IOinterface
 {
 public:
-    IOmujoco(mjData *d);
+    IOmujoco(mjData *d, mjModel *m);
     ~IOmujoco();
     void sendRecv(const LowlevelCmd *cmd, LowlevelState *state);
 
@@ -54,6 +54,7 @@ private:
     mujoco_LowCmd _lowCmd;
     mujoco_LowState _lowState;
     mjData* _d;
+    mjModel *_m;
 
     void sendCmd(const LowlevelCmd *lowCmd);
     void recvState(LowlevelState *state);

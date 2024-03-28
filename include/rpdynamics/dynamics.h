@@ -9,7 +9,7 @@
 class Dynamics
 {
     public:
-    Dynamics(Robot *robot)
+    Dynamics(h1Robot *robot)
     {
         _robot = robot;
         _NB = robot->_NB;
@@ -78,7 +78,7 @@ class Dynamics
         _robot->_isUpdated = false;
     }
 
-    Robot *_robot;
+    h1Robot *_robot;
     double *_q;
     double *_dq;
 

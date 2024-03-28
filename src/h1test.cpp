@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 
     
     Init_window();
-    ioInter = new IOmujoco(d);
+    ioInter = new IOmujoco(d,m);
     ctrlPlat = CtrlPlatform::MUJOCO;
 
     h1Robot *h1 = new h1Robot();

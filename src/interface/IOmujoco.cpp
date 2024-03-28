@@ -5,9 +5,10 @@
 #include <csignal>
 #include "rpdynamics/TimeCounter.h"
 
-IOmujoco::IOmujoco(mjData *d) : IOinterface()
+IOmujoco::IOmujoco(mjData *d, mjModel *m) : IOinterface()
 {
     _d = d;
+    _m = m;
     cmdPanel = new KeyBoard();
 }
 

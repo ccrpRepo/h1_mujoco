@@ -26,37 +26,41 @@ struct MotorCmd
 
 struct LowlevelCmd
 {
-    MotorCmd motorCmd[12];
+    MotorCmd motorCmd[19];
 
-    void setQ(Vec12 q)
+    void setQ(Eigen::Matrix<double,19,1> q)
     {
-        for (int i(0); i < 12; ++i)
+        for (int i(0); i < 19; ++i)
         {
             motorCmd[i].q = q(i);
         }
     }
-    void setQ(int legID, Vec3 qi)
+    void setQ(int legID, Vec5 qi)
     {
-        motorCmd[legID * 3 + 0].q = qi(0);
-        motorCmd[legID * 3 + 1].q = qi(1);
-        motorCmd[legID * 3 + 2].q = qi(2);
+        motorCmd[legID * 5 + 0].q = qi(0);
+        motorCmd[legID * 5 + 1].q = qi(1);
+        motorCmd[legID * 5 + 2].q = qi(2);
+        motorCmd[legID * 5 + 3].q = qi(3);
+        motorCmd[legID * 5 + 4].q = qi(4);
     }
-    void setQd(Vec12 qd)
+    void setQd(Eigen::Matrix<double, 19, 1> qd)
     {
-        for (int i(0); i < 12; ++i)
+        for (int i(0); i < 19; ++i)
         {
             motorCmd[i].dq = qd(i);
         }
     }
     void setQd(int legID, Vec3 qdi)
     {
-        motorCmd[legID * 3 + 0].dq = qdi(0);
-        motorCmd[legID * 3 + 1].dq = qdi(1);
-        motorCmd[legID * 3 + 2].dq = qdi(2);
+        motorCmd[legID * 5 + 0].dq = qdi(0);
+        motorCmd[legID * 5 + 1].dq = qdi(1);
+        motorCmd[legID * 5 + 2].dq = qdi(2);
+        motorCmd[legID * 5 + 3].dq = qdi(3);
+        motorCmd[legID * 5 + 4].dq = qdi(4);
     }
-    void setTau(Vec12 tau, Vec2 torqueLimit = Vec2(-50, 50))
+    void setTau(Eigen::Matrix<double, 19, 1> tau, Vec2 torqueLimit = Vec2(-50, 50))
     {
-        for (int i(0); i < 12; ++i)
+        for (int i(0); i < 19; ++i)
         {
             if (std::isnan(tau(i)))
             {
@@ -67,96 +71,130 @@ struct LowlevelCmd
     }
     void setZeroDq(int legID)
     {
-        motorCmd[legID * 3 + 0].dq = 0;
-        motorCmd[legID * 3 + 1].dq = 0;
-        motorCmd[legID * 3 + 2].dq = 0;
+        motorCmd[legID * 5 + 0].dq = 0;
+        motorCmd[legID * 5 + 1].dq = 0;
+        motorCmd[legID * 5 + 2].dq = 0;
+        motorCmd[legID * 5 + 3].dq = 0;
+        motorCmd[legID * 5 + 4].dq = 0;
     }
     void setZeroDq()
     {
-        for (int i(0); i < 4; ++i)
+        for (int i(0); i < 2; ++i)
         {
             setZeroDq(i);
         }
     }
     void setZeroTau(int legID)
     {
-        motorCmd[legID * 3 + 0].tau = 0;
-        motorCmd[legID * 3 + 1].tau = 0;
-        motorCmd[legID * 3 + 2].tau = 0;
+        motorCmd[legID * 5 + 0].tau = 0;
+        motorCmd[legID * 5 + 1].tau = 0;
+        motorCmd[legID * 5 + 2].tau = 0;
+        motorCmd[legID * 5 + 3].tau = 0;
+        motorCmd[legID * 5 + 4].tau = 0;
     }
     void setSimStanceGain(int legID)
     {
-        motorCmd[legID * 3 + 0].mode = 10;
-        motorCmd[legID * 3 + 0].Kp = 100; //180
-        motorCmd[legID * 3 + 0].Kd = 2; //8
-        motorCmd[legID * 3 + 1].mode = 10;
-        motorCmd[legID * 3 + 1].Kp = 100; //180
-        motorCmd[legID * 3 + 1].Kd = 2; //8
-        motorCmd[legID * 3 + 2].mode = 10;
-        motorCmd[legID * 3 + 2].Kp = 200; //300
-        motorCmd[legID * 3 + 2].Kd = 1.5; //15
+        motorCmd[legID * 5 + 0].mode = 10;
+        motorCmd[legID * 5 + 0].Kp = 100; //180
+        motorCmd[legID * 5 + 0].Kd = 2; //8
+        motorCmd[legID * 5 + 1].mode = 10;
+        motorCmd[legID * 5 + 1].Kp = 100; //180
+        motorCmd[legID * 5 + 1].Kd = 2; //8
+        motorCmd[legID * 5 + 2].mode = 10;
+        motorCmd[legID * 5 + 2].Kp = 200; //300
+        motorCmd[legID * 5 + 2].Kd = 1.5; //15
+        motorCmd[legID * 5 + 3].mode = 10;
+        motorCmd[legID * 5 + 3].Kp = 100; // 180
+        motorCmd[legID * 5 + 3].Kd = 2;   // 8
+        motorCmd[legID * 5 + 4].mode = 10;
+        motorCmd[legID * 5 + 4].Kp = 200; // 300
+        motorCmd[legID * 5 + 4].Kd = 1.5; // 15
     }
     void setRealStanceGain(int legID)
     {
-        motorCmd[legID * 3 + 0].mode = 10;
-        motorCmd[legID * 3 + 0].Kp = 60;
-        motorCmd[legID * 3 + 0].Kd = 5;
-        motorCmd[legID * 3 + 1].mode = 10;
-        motorCmd[legID * 3 + 1].Kp = 40;
-        motorCmd[legID * 3 + 1].Kd = 4;
-        motorCmd[legID * 3 + 2].mode = 10;
-        motorCmd[legID * 3 + 2].Kp = 80;
-        motorCmd[legID * 3 + 2].Kd = 7;
+        motorCmd[legID * 5 + 0].mode = 10;
+        motorCmd[legID * 5 + 0].Kp = 60;
+        motorCmd[legID * 5 + 0].Kd = 5;
+        motorCmd[legID * 5 + 1].mode = 10;
+        motorCmd[legID * 5 + 1].Kp = 40;
+        motorCmd[legID * 5 + 1].Kd = 4;
+        motorCmd[legID * 5 + 2].mode = 10;
+        motorCmd[legID * 5 + 2].Kp = 80;
+        motorCmd[legID * 5 + 2].Kd = 7;
+        motorCmd[legID * 5 + 3].mode = 10;
+        motorCmd[legID * 5 + 3].Kp = 40;
+        motorCmd[legID * 5 + 3].Kd = 4;
+        motorCmd[legID * 5 + 4].mode = 10;
+        motorCmd[legID * 5 + 4].Kp = 80;
+        motorCmd[legID * 5 + 4].Kd = 7;
     }
     void setZeroGain(int legID)
     {
-        motorCmd[legID * 3 + 0].mode = 10;
-        motorCmd[legID * 3 + 0].Kp = 0;
-        motorCmd[legID * 3 + 0].Kd = 0;
-        motorCmd[legID * 3 + 1].mode = 10;
-        motorCmd[legID * 3 + 1].Kp = 0;
-        motorCmd[legID * 3 + 1].Kd = 0;
-        motorCmd[legID * 3 + 2].mode = 10;
-        motorCmd[legID * 3 + 2].Kp = 0;
-        motorCmd[legID * 3 + 2].Kd = 0;
+        motorCmd[legID * 5 + 0].mode = 10;
+        motorCmd[legID * 5 + 0].Kp = 0;
+        motorCmd[legID * 5 + 0].Kd = 0;
+        motorCmd[legID * 5 + 1].mode = 10;
+        motorCmd[legID * 5 + 1].Kp = 0;
+        motorCmd[legID * 5 + 1].Kd = 0;
+        motorCmd[legID * 5 + 2].mode = 10;
+        motorCmd[legID * 5 + 2].Kp = 0;
+        motorCmd[legID * 5 + 2].Kd = 0;
+        motorCmd[legID * 5 + 3].mode = 10;
+        motorCmd[legID * 5 + 3].Kp = 0;
+        motorCmd[legID * 5 + 3].Kd = 0;
+        motorCmd[legID * 5 + 4].mode = 10;
+        motorCmd[legID * 5 + 4].Kp = 0;
+        motorCmd[legID * 5 + 4].Kd = 0;
     }
     void setZeroGain()
     {
-        for (int i(0); i < 4; ++i)
+        for (int i(0); i < 2; ++i)
         {
             setZeroGain(i);
         }
     }
     void setStableGain(int legID)
     {
-        motorCmd[legID * 3 + 0].mode = 10;
-        motorCmd[legID * 3 + 0].Kp = 0.8;
-        motorCmd[legID * 3 + 0].Kd = 0.8;
-        motorCmd[legID * 3 + 1].mode = 10;
-        motorCmd[legID * 3 + 1].Kp = 0.8;
-        motorCmd[legID * 3 + 1].Kd = 0.8;
-        motorCmd[legID * 3 + 2].mode = 10;
-        motorCmd[legID * 3 + 2].Kp = 0.8;
-        motorCmd[legID * 3 + 2].Kd = 0.8;
+        motorCmd[legID * 5 + 0].mode = 10;
+        motorCmd[legID * 5 + 0].Kp = 0.8;
+        motorCmd[legID * 5 + 0].Kd = 0.8;
+        motorCmd[legID * 5 + 1].mode = 10;
+        motorCmd[legID * 5 + 1].Kp = 0.8;
+        motorCmd[legID * 5 + 1].Kd = 0.8;
+        motorCmd[legID * 5 + 2].mode = 10;
+        motorCmd[legID * 5 + 2].Kp = 0.8;
+        motorCmd[legID * 5 + 2].Kd = 0.8;
+        motorCmd[legID * 5 + 3].mode = 10;
+        motorCmd[legID * 5 + 3].Kp = 0.8;
+        motorCmd[legID * 5 + 3].Kd = 0.8;
+        motorCmd[legID * 5 + 4].mode = 10;
+        motorCmd[legID * 5 + 4].Kp = 0.8;
+        motorCmd[legID * 5 + 4].Kd = 0.8;
     }
     void setStableGain()
     {
-        for (int i(0); i < 4; ++i)
+        for (int i(0); i < 2; ++i)
         {
             setStableGain(i);
         }
     }
     void setSwingGain(int legID)
     {
-        motorCmd[legID * 3 + 0].mode = 10;
-        motorCmd[legID * 3 + 0].Kp = 30;
-        motorCmd[legID * 3 + 0].Kd = 2;
-        motorCmd[legID * 3 + 1].mode = 10;
-        motorCmd[legID * 3 + 1].Kp = 30;
-        motorCmd[legID * 3 + 1].Kd = 2;
-        motorCmd[legID * 3 + 2].mode = 10;
-        motorCmd[legID * 3 + 2].Kp = 30;
-        motorCmd[legID * 3 + 2].Kd = 2;
+        motorCmd[legID * 5 + 0].mode = 10;
+        motorCmd[legID * 5 + 0].Kp = 30;
+        motorCmd[legID * 5 + 0].Kd = 2;
+        motorCmd[legID * 5 + 1].mode = 10;
+        motorCmd[legID * 5 + 1].Kp = 30;
+        motorCmd[legID * 5 + 1].Kd = 2;
+        motorCmd[legID * 5 + 2].mode = 10;
+        motorCmd[legID * 5 + 2].Kp = 30;
+        motorCmd[legID * 5 + 2].Kd = 2;
+        motorCmd[legID * 5 + 3].mode = 10;
+        motorCmd[legID * 5 + 3].Kp = 30;
+        motorCmd[legID * 5 + 3].Kd = 2;
+        motorCmd[legID * 5 + 4].mode = 10;
+        motorCmd[legID * 5 + 4].Kp = 30;
+        motorCmd[legID * 5 + 4].Kd = 2;
     }
 };
 
