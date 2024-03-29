@@ -33,33 +33,33 @@ file(GLOB_RECURSE SRC_LIST
     "src/*/*.cc"
 )
 
-add_executable(h1test
-src/h1test.cpp
-${SRC_LIST}
-)
+# add_executable(h1test
+# src/h1test.cpp
+# ${SRC_LIST}
+# )
 
 add_executable(${BIN_NAME}
 src/h1sys.cpp
 ${SRC_LIST}
 )
 
-target_link_libraries(h1test ${LIB_MUJOCO} pthread)
+# target_link_libraries(h1test ${LIB_MUJOCO} pthread)
 
 target_link_libraries(${BIN_NAME} ${LIB_MUJOCO} pthread)
 
 #Standard libraries for GL
 target_link_libraries(${PROJECT_NAME} GL GLU glut )
 
-target_link_libraries(h1test GL GLU glut )
+# target_link_libraries(h1test GL GLU glut )
 
 #Additional libraries from mujoco package
 target_link_libraries(${PROJECT_NAME} ${MJPRO_PATH}/bin/libglew.so )
 
-target_link_libraries(h1test ${MJPRO_PATH}/bin/libglew.so )
+# target_link_libraries(h1test ${MJPRO_PATH}/bin/libglew.so )
 
 target_link_libraries(${PROJECT_NAME} ${MJPRO_PATH}/bin/libglfw.so.3 )
 
-target_link_libraries(h1test ${MJPRO_PATH}/bin/libglfw.so.3 )
+# target_link_libraries(h1test ${MJPRO_PATH}/bin/libglfw.so.3 )
 #target_link_libraries(${PROJECT_NAME}_exe libglewegl.so )
 #target_link_libraries(${PROJECT_NAME}_exe libglewosmesa.so)
 
@@ -67,6 +67,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
  include
 )
 
-target_include_directories(h1test PUBLIC
- include
-)
+# target_include_directories(h1test PUBLIC
+#  include
+# )

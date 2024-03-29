@@ -3,12 +3,12 @@
 State_SwingTest::State_SwingTest(CtrlComponents *ctrlComp)
     : FSMState(ctrlComp, FSMStateName::SWINGTEST, "swingTest")
 {
-    _xMin = -0.15;
-    _xMax = 0.10;
-    _yMin = -0.15;
-    _yMax = 0.15;
+    _xMin = -0.35;
+    _xMax = 0.35;
+    _yMin = -0.25;
+    _yMax = 0.25;
     _zMin = -0.05;
-    _zMax = 0.20;
+    _zMax = 0.60;
 }
 
 void State_SwingTest::enter()
@@ -29,9 +29,9 @@ void State_SwingTest::enter()
     _lowCmd->setSwingGain(0);
 
     Eigen::Matrix<double, 6, 1> Kp;
-    Kp << 20, 20, 50, 50, 50,50;
+    Kp << 20, 100, 50, 50, 50, 50;
     Eigen::Matrix<double, 6, 1> Kd;
-    Kd << 5, 5, 20, 10, 10.10;
+    Kd << 5, 5, 20, 10, 10, 10;
     _Kp = Kp.asDiagonal();
     _Kd = Kd.asDiagonal();
 
@@ -61,7 +61,7 @@ void State_SwingTest::run()
 
     if (_userValue.lx > 0)
     {
-        _posGoal(1) = invNormalize(_userValue.lx, _initPos(1, 0), _initPos(1) + _yMax, 0, 1);
+        _posGoal(1) = invNormalize(_userValue.lx, _initPos(1), _initPos(1) + _yMax, 0, 1);
     }
     else
     {
@@ -76,7 +76,9 @@ void State_SwingTest::run()
     {
         _posGoal(2) = invNormalize(_userValue.ry, _initPos(2) + _zMin, _initPos(2), -1, 0);
     }
-
+    // std::cout <<"posGoal: " <<_posGoal.transpose() << std::endl;
+   
+        
     _positionCtrl();
     _torqueCtrl();
 }
@@ -90,14 +92,18 @@ FSMStateName State_SwingTest::checkChange()
 {
     if (_lowState->userCmd == UserCommand::L2_B)
     {
+        // std::cout << "change" << std::endl;
         return FSMStateName::PASSIVE;
     }
     else if (_lowState->userCmd == UserCommand::L2_A)
     {
+        // std::cout << "change" << std::endl;
         return FSMStateName::FIXEDSTAND;
+        
     }
     else
     {
+        // std::cout << "not change" << std::endl;
         return FSMStateName::SWINGTEST;
     }
 }
@@ -108,8 +114,10 @@ void State_SwingTest::_positionCtrl()
     Vec5 endposd_l;
     endposd_l.setZero();
     endposd_l.head(3) = _feetPos.col(0);
+    // std::cout <<"des_pos: " <<_posGoal.transpose() << std::endl;
     _targetPos.setZero(19, 1);
     _targetPos.head(5) = _ctrlComp->_robot->getQ(endposd_l, 0);
+    // std::cout << _targetPos.segment(1,3).transpose() << std::endl;
     _lowCmd->setQ(_targetPos);
 }
 
@@ -119,24 +127,25 @@ void State_SwingTest::_torqueCtrl()
     Eigen::Matrix<double,5,2> footend = _ctrlComp->_robot->get_footEnd();
     Vec3 pos0 = footend.col(0).head(3);
     Vec6 vel0 = _ctrlComp->_robot->getFootVelocity(0);
-
     Vec6 pos_error;
     pos_error.setZero();
     pos_error.tail(3) = _posGoal - pos0;
-
-    Eigen::Matrix<double,6,1> force0 = _Kp * (pos_error) + _Kd * (-vel0);
-
-    Eigen::Matrix<double, 19, 1> torque;
-
+    // std::cout << "pos0: " << pos0.transpose() << std::endl;
+    Eigen::Matrix<double, 6, 1> force0 = _Kp * (pos_error);
+    Mat6 X_f;
+    X_f.setIdentity();
+    for (int i = 0; i < 5; i++)
+    {
+        X_f = X_f * _ctrlComp->_robot->X_dwtree[i];
+    }
+    force0 = X_f.transpose().inverse() * force0;
+    Eigen::Matrix<double, 19, 1>  torque;
     Vec5 q;
     for (int i = 0; i < 5; i++)
     {
         q(i) = _ctrlComp->_robot->_q[i];
     }
-
     Eigen::Matrix<double, 6, 5> J = _ctrlComp->_robot->leg_Jacobian(q, 0);
-
     torque.segment(0, 5) = J.transpose() * force0;
-
     _lowCmd->setTau(torque);
 }

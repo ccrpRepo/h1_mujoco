@@ -25,7 +25,8 @@ struct FSMStateList
     void deletePtr()
     {
         delete invalid;
-        
+        delete passive;
+        delete swingTest;
     }
 };
 
@@ -36,6 +37,7 @@ public:
     ~FSM();
     void initialize();
     void run();
+    
 
 private:
     FSMState *getNextState(FSMStateName stateName);

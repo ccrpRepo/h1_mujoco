@@ -18,7 +18,7 @@ FSM::~FSM()
 
 void FSM::initialize()
 {
-    _currentState = _stateList.passive;
+    _currentState = _stateList.swingTest;
     _currentState->enter();
     _nextState = _currentState;
     _mode = FSMMode::NORMAL;
@@ -27,10 +27,14 @@ void FSM::initialize()
 void FSM::run()
 {
     _startTime = getSystemTime();
+    
     _ctrlComp->sendRecv();
     _ctrlComp->runWaveGen();
     _ctrlComp->estimator->run_inMujoco();
+    
+
     _ctrlComp->set_robot_state();
+    
     if (!checkSafty())
     {
         _ctrlComp->ioInter->setPassive();
@@ -52,6 +56,7 @@ void FSM::run()
         _currentState->exit();
         _currentState = _nextState;
         _currentState->enter();
+
         _mode = FSMMode::NORMAL;
         _currentState->run();
     }

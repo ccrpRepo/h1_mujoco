@@ -44,7 +44,6 @@ Estimator::Estimator(h1Robot *robot, mjData *d, mjModel *m)
     _robot = robot;
     _d = d;
     _m = m;
-
 }
 
 void Estimator::run_inMujoco()

@@ -7,7 +7,7 @@ void State_Passive::enter()
 {
     if (_ctrlComp->ctrlPlatform == CtrlPlatform::MUJOCO)
     {
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < 19; i++)
         {
             _lowCmd->motorCmd[i].mode = 10;
             _lowCmd->motorCmd[i].q = 0;
@@ -19,7 +19,7 @@ void State_Passive::enter()
     }
     else if (_ctrlComp->ctrlPlatform == CtrlPlatform::REALROBOT)
     {
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < 19; i++)
         {
             _lowCmd->motorCmd[i].mode = 10;
             _lowCmd->motorCmd[i].q = 0;
@@ -35,6 +35,7 @@ void State_Passive::enter()
 
 void State_Passive::run()
 {
+    // std::cout << "passive mode" << std::endl;
 }
 
 void State_Passive::exit()
@@ -46,6 +47,7 @@ FSMStateName State_Passive::checkChange()
     if (_lowState->userCmd == UserCommand::L2_A)
     {
         return FSMStateName::FIXEDSTAND;
+        // return FSMStateName::SWINGTEST;
     }
     else
     {

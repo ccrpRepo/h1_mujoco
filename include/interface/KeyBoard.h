@@ -24,8 +24,8 @@ private:
     void changeValue();
 
     pthread_t _tid;
-    float sensitivityLeft = 0.5;
-    float sensitivityRight = 0.5;
+    float sensitivityLeft = 0.1;
+    float sensitivityRight = 0.1;
     struct termios _oldSettings, _newSettings;
     fd_set set;
     int res;

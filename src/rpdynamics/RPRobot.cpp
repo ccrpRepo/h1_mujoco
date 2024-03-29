@@ -853,10 +853,10 @@ Vec5 h1Robot::getQ(Vec5 endposyawpitch, int endid)
     else if (qd(0) < -0.43)
         qd(0) = -0.429;
 
-    if (qd(1) > 0.43)
-        qd(1) = 0.429;
-    else if (qd(1) < -0.43)
-        qd(1) = -0.429;
+    if (qd(1) > 0.86)
+        qd(1) = 0.86;
+    else if (qd(1) < -0.86)
+        qd(1) = -0.86;
 
     if (qd(2) > 1.57)
         qd(2) = 1.569;
@@ -905,9 +905,9 @@ Mat52 h1Robot::get_footEnd()
     double xita_lf = acos(xais.dot(lf_xaxis) / xais.norm() * lf_xaxis.norm());
     double xita_rf = acos(xais.dot(rf_xaxis) / xais.norm() * rf_xaxis.norm());
 
-    footend.col(0).head(3) = T_lf.block(0, 0, 3, 1); // left foot pos
+    footend.col(0).head(3) = T_lf.block(0, 3, 3, 1); // left foot pos
     footend.col(0).tail(2) = Vec2(_q[0], xita_lf);   // left foot yaw and pitch
-    footend.col(1).head(3) = T_rf.block(0, 0, 3, 1); // right foot pos
+    footend.col(1).head(3) = T_rf.block(0, 3, 3, 1); // right foot pos
     footend.col(1).tail(2) = Vec2(_q[5], xita_rf);   // left foot yaw and pitch
 
     return footend;

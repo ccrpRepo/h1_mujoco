@@ -17,47 +17,48 @@ struct CtrlComponents
 public:
     CtrlComponents(IOinterface *ioInter, Dynamics *dy_, mjData* d, mjModel* m) : ioInter(ioInter),dy(dy_)
     {
+        // waveGen = new WaveGenerator(0.5, 0.5, Vec4(0, 0.5, 0.5, 0)); // Trot 0.45
         _d = d;
         _m = m;
         _robot = dy->_robot;
         lowCmd = new LowlevelCmd();
         lowState = new LowlevelState();
-        contact = new VecInt2;
-        phase = new Vec2;
-        *contact = VecInt2(0, 0);
-        *phase = Vec2(0.5, 0.5);
+        contact = new VecInt4;
+        phase = new Vec4;
+        *contact = VecInt4(0, 0, 0, 0);
+        *phase = Vec4(0.5, 0.5, 0.5, 0.5);
     }
     ~CtrlComponents()
     {
+        std::cout << "delete ctrl" << std::endl;
         delete lowCmd;
         delete lowState;
         delete ioInter;
         delete _robot;
         delete waveGen;
-        // delete estimator;
+        delete estimator;
         // delete balCtrl;
         delete dy;
     }
-
+    
     IOinterface *ioInter;
     LowlevelCmd *lowCmd;
     LowlevelState *lowState;
-    // QuadrupedRobot *robotModel;
     h1Robot *_robot;
     WaveGenerator *waveGen;
     Estimator *estimator;
     // BalanceCtrl *balCtrl;
     Dynamics *dy;
-    double q[12];
-    double qd[12];
+    double q[19];
+    double qd[19];
     double quaxyz[7];
     double v_base[6];
 
     mjData *_d;
     mjModel *_m;
 
-    VecInt2 *contact;
-    Vec2 *phase;
+    VecInt4 *contact;
+    Vec4 *phase;
 
     double dt;
     bool *running;
@@ -83,7 +84,7 @@ public:
     void sendRecv()
     {
         ioInter->sendRecv(lowCmd, lowState);
-        for (int i(0); i < 12; ++i)
+        for (int i(0); i < 19; ++i)
         {
             q[i] = lowState->motorState[i].q;
             qd[i] = lowState->motorState[i].dq;
@@ -125,6 +126,7 @@ public:
         dy->_robot->set_quaxyz(quaxyz);
         dy->_robot->set_vbase(v_base);
     }
+    
 
 private:
     WaveStatus _waveStatus = WaveStatus::SWING_ALL;

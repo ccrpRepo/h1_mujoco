@@ -73,33 +73,33 @@ struct IMU
 struct LowlevelState
 {
     IMU imu;
-    MotorState motorState[12];
+    MotorState motorState[19];
     UserCommand userCmd;
     UserValue userValue;
 
-    Vec34 getQ()
-    {
-        Vec34 qLegs;
-        for (int i(0); i < 4; ++i)
-        {
-            qLegs.col(i)(0) = motorState[3 * i].q;
-            qLegs.col(i)(1) = motorState[3 * i + 1].q;
-            qLegs.col(i)(2) = motorState[3 * i + 2].q;
-        }
-        return qLegs;
-    }
+    // Vec34 getQ()
+    // {
+    //     Vec34 qLegs;
+    //     for (int i(0); i < 2; ++i)
+    //     {
+    //         qLegs.col(i)(0) = motorState[3 * i].q;
+    //         qLegs.col(i)(1) = motorState[3 * i + 1].q;
+    //         qLegs.col(i)(2) = motorState[3 * i + 2].q;
+    //     }
+    //     return qLegs;
+    // }
 
-    Vec34 getQd()
-    {
-        Vec34 qdLegs;
-        for (int i(0); i < 4; ++i)
-        {
-            qdLegs.col(i)(0) = motorState[3 * i].dq;
-            qdLegs.col(i)(1) = motorState[3 * i + 1].dq;
-            qdLegs.col(i)(2) = motorState[3 * i + 2].dq;
-        }
-        return qdLegs;
-    }
+    // Vec34 getQd()
+    // {
+    //     Vec34 qdLegs;
+    //     for (int i(0); i < 4; ++i)
+    //     {
+    //         qdLegs.col(i)(0) = motorState[3 * i].dq;
+    //         qdLegs.col(i)(1) = motorState[3 * i + 1].dq;
+    //         qdLegs.col(i)(2) = motorState[3 * i + 2].dq;
+    //     }
+    //     return qdLegs;
+    // }
 
     RotMat getRotMat()
     {
@@ -136,9 +136,9 @@ struct LowlevelState
         return getGyroGlobal()(2);
     }
 
-    void setQ(Vec12 q)
+    void setQ(Eigen::Matrix<double,19,1> q)
     {
-        for (int i(0); i < 12; ++i)
+        for (int i(0); i < 19; ++i)
         {
             motorState[i].q = q(i);
         }

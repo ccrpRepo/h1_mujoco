@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-WaveGenerator::WaveGenerator(double period, double stancePhaseRatio, Vec2 bias)
+WaveGenerator::WaveGenerator(double period, double stancePhaseRatio, Vec4 bias)
     : _period(period), _stRatio(stancePhaseRatio), _bias(bias)
 {
     if ((_stRatio >= 1) || (_stRatio <= 0))
@@ -31,7 +31,7 @@ WaveGenerator::~WaveGenerator()
 {
 }
 
-void WaveGenerator::calcContactPhase(Vec2 &phaseResult, VecInt2 &contactResult, WaveStatus status)
+void WaveGenerator::calcContactPhase(Vec4 &phaseResult, VecInt4 &contactResult, WaveStatus status)
 {
     calcWave(_phase, _contact, status);
 
@@ -55,7 +55,7 @@ void WaveGenerator::calcContactPhase(Vec2 &phaseResult, VecInt2 &contactResult, 
 
     if (_switchStatus.sum() != 0)
     {
-        for (int i(0); i < 2; ++i)
+        for (int i(0); i < 4; ++i)
         {
             if (_contact(i) == _contactPast(i))
             {
@@ -92,12 +92,12 @@ float WaveGenerator::getT()
     return _period;
 }
 
-void WaveGenerator::calcWave(Vec2 &phase, VecInt2 &contact, WaveStatus status)
+void WaveGenerator::calcWave(Vec4 &phase, VecInt4 &contact, WaveStatus status)
 {
     if (status == WaveStatus::WAVE_ALL)
     {
         _passT = (double)(getSystemTime() - _startT) * 1e-6;
-        for (int i(0); i < 2; ++i)
+        for (int i(0); i < 4; ++i)
         {
             _normalT(i) = fmod(_passT + _period - _period * _bias(i), _period) / _period;
             if (_normalT(i) < _stRatio)
@@ -115,11 +115,11 @@ void WaveGenerator::calcWave(Vec2 &phase, VecInt2 &contact, WaveStatus status)
     else if (status == WaveStatus::SWING_ALL)
     {
         contact.setZero();
-        phase << 0.5, 0.5;
+        phase << 0.5, 0.5, 0.5, 0.5;
     }
     else if (status == WaveStatus::STANCE_ALL)
     {
         contact.setOnes();
-        phase << 0.5, 0.5;
+        phase << 0.5, 0.5, 0.5, 0.5;
     }
 }
