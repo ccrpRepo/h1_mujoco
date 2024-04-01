@@ -19,8 +19,10 @@ private:
     void _torqueCtrl();
 
     Eigen::Matrix<double, 3, 2> _initFeetPos, _feetPos;
-    Vec3 _initPos, _posGoal;
-    Eigen::Matrix<double, 19, 1> _targetPos;
+    Vec3 _initPos;
+    Vec3 _posGoal;
+    Eigen::Matrix<double, 19, 1>
+        _targetPos;
     float _xMin, _xMax;
     float _yMin, _yMax;
     float _zMin, _zMax;

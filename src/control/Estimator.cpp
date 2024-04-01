@@ -39,8 +39,9 @@
 //     _initSystem();
 // }
 
-Estimator::Estimator(h1Robot *robot, mjData *d, mjModel *m)
+Estimator::Estimator(h1Robot *robot, mjData *d, mjModel *m, LowlevelState *lowState)
 {
+    _lowState = lowState;
     _robot = robot;
     _d = d;
     _m = m;
@@ -215,17 +216,19 @@ Vec3 Estimator::getVelocity()
 
 Vec3 Estimator::getFootPos(int i) // i = 0 : left ; i = 1 : right;
 {
-    // std::cout << "getPosition(): " << getPosition() << std::endl;
-    return getPosition() + _lowState->getRotMat() * _xhat.segment(6+3*i,3);
+    return getPosition() + _lowState->getRotMat() * _xhat.segment(6 + 3 * i, 3);
 }
 
 Eigen::Matrix<double, 3, 2> Estimator::getFeetPos()
 {
     Eigen::Matrix<double, 3, 2> feetPos;
-    for (int i(0); i < 2; ++i)
+    feetPos.setZero();
+    for (int i=0; i < 2; i++)
     {
         feetPos.col(i) = getFootPos(i);
     }
+    // std::cout << "feetPos: " << std::endl
+    //           << feetPos << std::endl;
     return feetPos;
 }
 

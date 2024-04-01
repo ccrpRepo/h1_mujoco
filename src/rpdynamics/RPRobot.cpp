@@ -158,6 +158,16 @@ void Robot::Update_Model()
             // std::cout << i << ": " << std::endl
             //           << X_dwtree[i] << std::endl;
         }
+        T_foot[0].setIdentity();
+        for (int i = 0; i < 5; i++)
+        {
+            T_foot[0] = T_foot[0] * T_dwtree[i];
+        }
+        T_foot[1].setIdentity();
+        for (int i = 5; i < 10; i++)
+        {
+            T_foot[1] = T_foot[1] * T_dwtree[i];
+        }
     }
         
     _isUpdated = true;
@@ -247,8 +257,7 @@ Eigen::Matrix<double,6,5> h1Robot::leg_Jacobian(Vec5 q, int endid)
         index = 5;
     }
     Mat6 Xq_[5], X_dwtree_[5];
-
-    for (int i = index; i < 5 + index; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (_joint[i]._jtype == JointType::RZ)
         {
@@ -260,7 +269,7 @@ Eigen::Matrix<double,6,5> h1Robot::leg_Jacobian(Vec5 q, int endid)
         }
         else if (_joint[i]._jtype == JointType::RY)
         {
-            Xq_[i] = Xroty(q[i]); // X_down
+            Xq_[i] = Xroty(q[i ]); // X_down
         }
         X_dwtree_[i] = Xj[i] * Xq_[i];
     }
@@ -949,12 +958,11 @@ Vec6 h1Robot::getFootVelocity(int endid)
 {
     Vec5 q,dq;
     int index = endid * 5;
-    for (int i = index; i < 5 + index; i++)
+    for (int i = 0; i < 5; i++)
     {
-        q(i) = _q[i];
-        dq(i) = _dq[i];
+        q(i) = _q[i +  index];
+        dq(i) = _dq[i +  index];
     }
-
     Eigen::Matrix<double, 6, 5> J = leg_Jacobian(q, endid);
 
     Vec6 twist = J * dq;
@@ -965,7 +973,6 @@ Vec6 h1Robot::getFootVelocity(int endid)
 Vec6 h1Robot::getFeet2BVelocity(int endid, Coordiante frame)
 {
     Vec6 twist = getFootVelocity(endid);//in pelivs frame
-
     if(frame == Coordiante::BASE)
     {
         return twist;

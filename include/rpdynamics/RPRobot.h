@@ -105,6 +105,8 @@ class Robot
         MatX Cal_Jacobian(int ib, Coordiante frame);
         Mat4 Flt_Transform();
 
+        Mat4 T_foot[2];
+
         void set_q(double q[])
         {
             for (int i = 0; i < _NB;i++)
@@ -126,7 +128,7 @@ class Robot
             for (int i = 0; i < 7; i++)
             {
                 _quat_xyz[i] = q[i];
-                // std::cout << i << ": " << _q[i] <<std::endl;
+                // std::cout << i << ": " << _quat_xyz[i] << std::endl;
             }
         }
         void set_vbase(double v[])
@@ -185,7 +187,7 @@ class h1Robot : public Robot
             delete _urdf;
         }
         urdfData *_urdf;
-        Vec34 _endPfoot;
+        Mat4 _endPfoot[2]; //left(0) right(1)
 
         Vec5 getQd(Vec5 endposyawpitch, int endid, Vec6 twist);
         Vec5 getQ(Vec5 endposyawpitch, int endid);

@@ -6,6 +6,8 @@ FSM::FSM(CtrlComponents *ctrlComp)
 {
     _stateList.passive = new State_Passive(_ctrlComp);
     _stateList.swingTest = new State_SwingTest(_ctrlComp);
+    _stateList.stepTest = new State_StepTest(_ctrlComp);
+    _stateList.fixedHang = new State_FixedHang(_ctrlComp);
     _stateList.invalid = nullptr;
 
     initialize();
@@ -18,7 +20,7 @@ FSM::~FSM()
 
 void FSM::initialize()
 {
-    _currentState = _stateList.swingTest;
+    _currentState = _stateList.passive;
     _currentState->enter();
     _nextState = _currentState;
     _mode = FSMMode::NORMAL;
@@ -29,12 +31,12 @@ void FSM::run()
     _startTime = getSystemTime();
     
     _ctrlComp->sendRecv();
+    _ctrlComp->_robot->Update_Model();
     _ctrlComp->runWaveGen();
     _ctrlComp->estimator->run_inMujoco();
     
-
     _ctrlComp->set_robot_state();
-    
+
     if (!checkSafty())
     {
         _ctrlComp->ioInter->setPassive();
@@ -50,7 +52,7 @@ void FSM::run()
             std::cout << "Switched from " << _currentState->_stateNameString
                       << " to " << _nextState->_stateNameString << std::endl;
         }
-    }
+    }   
     else if (_mode == FSMMode::CHANGE)
     {
         _currentState->exit();
@@ -80,6 +82,9 @@ FSMState *FSM::getNextState(FSMStateName stateName)
     case FSMStateName::PASSIVE:
         return _stateList.passive;
         break;
+    case FSMStateName::FIXEDHANG:
+        return _stateList.fixedHang;
+        break;
 
     // case FSMStateName::FIXEDSTAND:
     //     return _stateList.fixedStand;
@@ -96,9 +101,9 @@ FSMState *FSM::getNextState(FSMStateName stateName)
     case FSMStateName::SWINGTEST:
         return _stateList.swingTest;
         break;
-    // case FSMStateName::STEPTEST:
-    //     return _stateList.stepTest;
-    //     break;
+    case FSMStateName::STEPTEST:
+        return _stateList.stepTest;
+        break;
     default:
         return _stateList.invalid;
         break;

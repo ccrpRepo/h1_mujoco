@@ -31,7 +31,7 @@ void State_SwingTest::enter()
     Eigen::Matrix<double, 6, 1> Kp;
     Kp << 20, 100, 50, 50, 50, 50;
     Eigen::Matrix<double, 6, 1> Kd;
-    Kd << 5, 5, 20, 10, 10, 10;
+    Kd << 5, 20, 20, 20, 15, 10;
     _Kp = Kp.asDiagonal();
     _Kd = Kd.asDiagonal();
 
@@ -48,6 +48,7 @@ void State_SwingTest::enter()
 
 void State_SwingTest::run()
 {
+    _ctrlComp->_robot->Update_Model();
     _userValue = _lowState->userValue;
 
     if (_userValue.ly > 0)
@@ -76,8 +77,6 @@ void State_SwingTest::run()
     {
         _posGoal(2) = invNormalize(_userValue.ry, _initPos(2) + _zMin, _initPos(2), -1, 0);
     }
-    // std::cout <<"posGoal: " <<_posGoal.transpose() << std::endl;
-   
         
     _positionCtrl();
     _torqueCtrl();
@@ -92,18 +91,15 @@ FSMStateName State_SwingTest::checkChange()
 {
     if (_lowState->userCmd == UserCommand::L2_B)
     {
-        // std::cout << "change" << std::endl;
         return FSMStateName::PASSIVE;
     }
     else if (_lowState->userCmd == UserCommand::L2_A)
     {
-        // std::cout << "change" << std::endl;
         return FSMStateName::FIXEDSTAND;
         
     }
     else
     {
-        // std::cout << "not change" << std::endl;
         return FSMStateName::SWINGTEST;
     }
 }
@@ -123,15 +119,17 @@ void State_SwingTest::_positionCtrl()
 
 void State_SwingTest::_torqueCtrl()
 {
-
     Eigen::Matrix<double,5,2> footend = _ctrlComp->_robot->get_footEnd();
     Vec3 pos0 = footend.col(0).head(3);
     Vec6 vel0 = _ctrlComp->_robot->getFootVelocity(0);
     Vec6 pos_error;
     pos_error.setZero();
     pos_error.tail(3) = _posGoal - pos0;
+    Mat3 R = _ctrlComp->_robot->T_foot[0].block(0, 0, 3, 3);
+    pos_error.tail(3) = R.transpose() * pos_error.tail(3); // transform to ankle coordinate
     // std::cout << "pos0: " << pos0.transpose() << std::endl;
-    Eigen::Matrix<double, 6, 1> force0 = _Kp * (pos_error);
+    Eigen::Matrix<double, 6, 1>
+        force0 = _Kp * (pos_error);
     Mat6 X_f;
     X_f.setIdentity();
     for (int i = 0; i < 5; i++)
@@ -140,6 +138,7 @@ void State_SwingTest::_torqueCtrl()
     }
     force0 = X_f.transpose().inverse() * force0;
     Eigen::Matrix<double, 19, 1>  torque;
+    torque.setZero();
     Vec5 q;
     for (int i = 0; i < 5; i++)
     {

@@ -56,7 +56,8 @@ enum class FSMStateName
     TROTTING,
     BALANCETEST,
     SWINGTEST,
-    STEPTEST
+    STEPTEST,
+    FIXEDHANG
 };
 
 #endif // ENUMCLASS_H

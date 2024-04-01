@@ -8,25 +8,28 @@
 #include "control/CtrlComponents.h"
 #include "FSM/State_Passive.h"
 #include "FSM/State_SwingTest.h"
+#include "FSM/State_StepTest.h"
+#include "FSM/State_FixedHang.h"
 
 struct FSMStateList
 {
     FSMState *invalid;
     State_Passive *passive;
     State_SwingTest *swingTest;
-
+    State_StepTest *stepTest;
+    State_FixedHang *fixedHang;
     // State_FixedStand *fixedStand;
     // State_FreeStand *freeStand;
     // State_Trotting *trotting;
     // State_BalanceTest *balanceTest;
-    // State_SwingTest *swingTest;
-    // State_StepTest *stepTest;
 
     void deletePtr()
     {
         delete invalid;
         delete passive;
         delete swingTest;
+        delete stepTest;
+        delete fixedHang;
     }
 };
 

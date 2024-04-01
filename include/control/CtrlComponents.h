@@ -23,10 +23,10 @@ public:
         _robot = dy->_robot;
         lowCmd = new LowlevelCmd();
         lowState = new LowlevelState();
-        contact = new VecInt4;
-        phase = new Vec4;
-        *contact = VecInt4(0, 0, 0, 0);
-        *phase = Vec4(0.5, 0.5, 0.5, 0.5);
+        contact = new VecInt2;
+        phase = new Vec2;
+        *contact = VecInt2(0, 0);
+        *phase = Vec2(0.5, 0.5);
     }
     ~CtrlComponents()
     {
@@ -57,8 +57,8 @@ public:
     mjData *_d;
     mjModel *_m;
 
-    VecInt4 *contact;
-    Vec4 *phase;
+    VecInt2 *contact;
+    Vec2 *phase;
 
     double dt;
     bool *running;
@@ -68,7 +68,7 @@ public:
     {
         if (ctrlPlatform == CtrlPlatform::MUJOCO)
         {
-            estimator = new Estimator(_robot, _d, _m);
+            estimator = new Estimator(_robot, _d, _m, lowState);
         }
         else
         {
@@ -107,11 +107,14 @@ public:
         Vec3 EstPosition = estimator->getPosition();
         Vec3 EstVelocity = estimator->getVelocity();
         Mat3 B2G_RotMat = estimator->_lowState->getRotMat();
+        
+        // Mat3 B2G_RotMat;
+        // B2G_RotMat.setIdentity();
         Mat3 G2B_RotMat = B2G_RotMat.transpose();
         quaxyz[4] = EstPosition(0);
         quaxyz[5] = EstPosition(1);
         quaxyz[6] = EstPosition(2);
-
+        
         // quaxyz[4] = 0;
         // quaxyz[5] = 0;
         // quaxyz[6] = 0;
@@ -126,7 +129,10 @@ public:
         dy->_robot->set_quaxyz(quaxyz);
         dy->_robot->set_vbase(v_base);
     }
-    
+    void setStartWave()
+    {
+        _waveStatus = WaveStatus::WAVE_ALL;
+    }
 
 private:
     WaveStatus _waveStatus = WaveStatus::SWING_ALL;

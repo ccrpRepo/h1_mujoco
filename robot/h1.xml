@@ -56,7 +56,7 @@
         <geom size="0.06 0.035" pos="-0.067 0 0" quat="0.707123 0 0.70709 0" type="cylinder" class="collision"/>
         <body name="left_hip_roll_link" pos="0.039468 0 0">
           <inertial pos="-0.0058 -0.00319 -9e-05" mass="2.232" fullinertia='0.0020603 0.0022482 0.0024323 3.2115E-05 2.878E-06 -7.813E-06'/>
-          <joint name="left_hip_roll_joint" axis="1 0 0" range="-0.86 0.86"/>
+          <joint name="left_hip_roll_joint" axis="1 0 0" range="-0.43 0.43"/>
           <geom class="visual" mesh="left_hip_roll_link"/>
           <geom class="collision" mesh="left_hip_roll_link"/>
           <body name="left_hip_pitch_link" pos="0 0.11536 0">

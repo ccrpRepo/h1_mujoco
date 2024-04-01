@@ -39,6 +39,7 @@ struct IMU
             accelerometer[i] = 0;
         }
         quaternion[3] = 0;
+        quaternion[0] = 1;
     }
 
     RotMat getRotMat()
@@ -77,29 +78,33 @@ struct LowlevelState
     UserCommand userCmd;
     UserValue userValue;
 
-    // Vec34 getQ()
-    // {
-    //     Vec34 qLegs;
-    //     for (int i(0); i < 2; ++i)
-    //     {
-    //         qLegs.col(i)(0) = motorState[3 * i].q;
-    //         qLegs.col(i)(1) = motorState[3 * i + 1].q;
-    //         qLegs.col(i)(2) = motorState[3 * i + 2].q;
-    //     }
-    //     return qLegs;
-    // }
+    Mat52 getQ()
+    {
+        Mat52 qLegs;
+        for (int i(0); i < 2; ++i)
+        {
+            qLegs.col(i)(0) = motorState[5 * i].q;
+            qLegs.col(i)(1) = motorState[5 * i + 1].q;
+            qLegs.col(i)(2) = motorState[5 * i + 2].q;
+            qLegs.col(i)(3) = motorState[5 * i + 3].q;
+            qLegs.col(i)(4) = motorState[5 * i + 4].q;
+        }
+        return qLegs;
+    }
 
-    // Vec34 getQd()
-    // {
-    //     Vec34 qdLegs;
-    //     for (int i(0); i < 4; ++i)
-    //     {
-    //         qdLegs.col(i)(0) = motorState[3 * i].dq;
-    //         qdLegs.col(i)(1) = motorState[3 * i + 1].dq;
-    //         qdLegs.col(i)(2) = motorState[3 * i + 2].dq;
-    //     }
-    //     return qdLegs;
-    // }
+    Mat52 getQd()
+    {
+        Mat52 qdLegs;
+        for (int i(0); i < 2; ++i)
+        {
+            qdLegs.col(i)(0) = motorState[5 * i].dq;
+            qdLegs.col(i)(1) = motorState[5 * i + 1].dq;
+            qdLegs.col(i)(2) = motorState[5 * i + 2].dq;
+            qdLegs.col(i)(3) = motorState[5 * i + 3].dq;
+            qdLegs.col(i)(4) = motorState[5 * i + 4].dq;
+        }
+        return qdLegs;
+    }
 
     RotMat getRotMat()
     {

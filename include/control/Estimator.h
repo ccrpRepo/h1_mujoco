@@ -14,7 +14,7 @@ class Estimator
 public:
     // Estimator(h1Robot *robot, LowlevelState *lowState, VecInt2 *contact, Vec2 *phase, double dt);
     // Estimator(h1Robot *robot, LowlevelState *lowState, VecInt2 *contact, Vec2 *phase, double dt, Vec18 Qdig, std::string testName);
-    Estimator(h1Robot *robot, mjData *d, mjModel *m);
+    Estimator(h1Robot *robot, mjData *d, mjModel *m, LowlevelState *lowState);
     ~Estimator();
     Vec3 getPosition();
     Vec3 getVelocity();
@@ -25,11 +25,11 @@ public:
     void run();
     void run_inMujoco();
     LowlevelState *_lowState;
-
+    Eigen::Matrix<double, 12, 1> _xhat; // The state of estimator, position(3)+velocity(3)+feet position(3x2)
 private:
     void _initSystem();
     // Linear System
-    Eigen::Matrix<double, 12, 1> _xhat; // The state of estimator, position(3)+velocity(3)+feet position(3x2)
+   
     // Vec3 _u;                            // The input of estimator
     // Eigen::Matrix<double, 28, 1> _y;    // The measurement value of output y
     // Eigen::Matrix<double, 28, 1> _yhat; // The prediction of output y

@@ -42,21 +42,29 @@ void IOmujoco::recvState(LowlevelState *state)
 {
     for (int i(0); i < 19; ++i)
     {
-        _lowState.motorstate[i].q = state->motorState[i].q = _d->sensordata[0+i];
-        _lowState.motorstate[i].dq = state->motorState[i].dq = _d->sensordata[19+i];
+        state->motorState[i].q = _d->sensordata[0 + i];
+        _lowState.motorstate[i].q = _d->sensordata[0 + i];
+        state->motorState[i].dq = _d->sensordata[19 + i];
+        _lowState.motorstate[i].dq = _d->sensordata[19 + i];
         state->motorState[i].ddq = _d->qacc[i + 6];
-        _lowState.motorstate[i].tauEst = state->motorState[i].tauEst = _d->actuator_force[i];
+        state->motorState[i].tauEst = _d->actuator_force[i];
+        _lowState.motorstate[i].tauEst = _d->actuator_force[i];
         // std::cout << _lowState.motorstate[i].dq << ", ";
     }
     for (int i(0); i < 3; ++i)
     {
-        _lowState.imustate.quaternion[i] = state->imu.quaternion[i] = _d->sensordata[47 + i];
-        _lowState.imustate.accelermeter[i] = state->imu.accelerometer[i] = _d->sensordata[38 + i];
-        _lowState.imustate.gyroscope[i] = state->imu.gyroscope[i] = _d->sensordata[41 + i];
+        _lowState.imustate.quaternion[i] = _d->sensordata[47 + i];
+        state->imu.quaternion[i] = _d->sensordata[47 + i];
+        _lowState.imustate.accelermeter[i] = _d->sensordata[38 + i];
+        state->imu.accelerometer[i] = _d->sensordata[38 + i];
+        _lowState.imustate.gyroscope[i] = _d->sensordata[41 + i];
+        state->imu.gyroscope[i] = _d->sensordata[41 + i];
         // std::cout << _lowState.imustate.quaternion[i] << ", ";
     }
+    _lowState.imustate.quaternion[3] = _d->sensordata[50];
+    state->imu.quaternion[3] = _d->sensordata[50];
+    // std::cout <<_lowState.imustate.quaternion[3] << ", ";
     // std::cout << std::endl;
-    _lowState.imustate.quaternion[3] = state->imu.quaternion[3] = _d->sensordata[50];
 }
 
 void IOmujoco::sendRecv(const LowlevelCmd *cmd, LowlevelState *state)
