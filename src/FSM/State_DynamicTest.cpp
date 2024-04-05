@@ -27,7 +27,7 @@ void State_DynamicTest::run()
 
     _lowCmd->setTau(tau);
     Eigen::Matrix<double, 19, 1> des_q;
-    des_q << 0, 0, 0, 0, 0,
+    des_q << 0, 0, -0.2, 0.4, 0.3,
              0, 0, 0, 0, 0,
              2,
              0, 0, 0, 0,

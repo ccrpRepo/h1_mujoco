@@ -29,7 +29,7 @@ void State_Passive::enter()
             _lowCmd->motorCmd[i].tau = 0;
         }
     }
-
+    
     _ctrlComp->setAllSwing();
 }
 

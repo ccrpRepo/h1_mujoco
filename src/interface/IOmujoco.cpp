@@ -76,5 +76,4 @@ void IOmujoco::sendRecv(const LowlevelCmd *cmd, LowlevelState *state)
     recvState(state);
     state->userCmd = cmdPanel->getUserCmd();
     state->userValue = cmdPanel->getUserValue();
-    
 }

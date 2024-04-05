@@ -95,7 +95,7 @@ FSMStateName State_SwingTest::checkChange()
     }
     else if (_lowState->userCmd == UserCommand::L2_A)
     {
-        return FSMStateName::FIXEDSTAND;
+        return FSMStateName::FIXEDHANG;
         
     }
     else
