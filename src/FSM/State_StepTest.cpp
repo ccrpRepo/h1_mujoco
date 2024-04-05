@@ -6,9 +6,9 @@ State_StepTest::State_StepTest(CtrlComponents *ctrlComp)
        _contact(ctrlComp->contact),
       _phase(ctrlComp->phase)
 {
-    _gaitHeight = 0.15;
+    _gaitHeight = 0.50;
 
-    _KpSwing = Vec3(60, 60, 20).asDiagonal();
+    _KpSwing = Vec3(600, 600, 200).asDiagonal();
     _KdSwing = Vec3(20, 20, 5).asDiagonal();
 
     _Kpp = Vec3(50, 50, 300).asDiagonal();
@@ -26,6 +26,8 @@ void State_StepTest::enter()
     _posFeetGlobalGoal = _posFeetGlobalInit;
     _ctrlComp->setStartWave();
     _ctrlComp->ioInter->zeroCmdPanel();
+    _lowCmd->setSwingGain(0);
+    _lowCmd->setSwingGain(1);
 }
 
 void State_StepTest::run()
@@ -36,12 +38,16 @@ void State_StepTest::run()
     _velBody = _est->getVelocity();
     _B2G_RotMat = _lowState->getRotMat();
     _G2B_RotMat = _B2G_RotMat.transpose();
+    // Vec2 dot;
+    // dot(0) = (*_phase)(0) * (1-(*_contact)(0));
+    // dot(1) = (*_phase)(1) * (1-(*_contact)(1));
+    // std::cout << "dot:" << dot.transpose() << std::endl;
     for (int i(0); i < 2; ++i)
     {
         if ((*_contact)(i) == 0)
         {
-            _posFeetGlobalGoal(2, i) = _posFeetGlobalInit(2, i) + (1 - cos((*_phase)(i) * 2 * M_PI)) * _gaitHeight;
-            _velFeetGlobalGoal(2, i) = sin((*_phase)(i) * 2 * M_PI) * 2 * M_PI * _gaitHeight;
+            _posFeetGlobalGoal(2, i) = _posFeetGlobalInit(2, i) + (1 - cos((*_phase)(i) * 2 * M_PI)) * _gaitHeight/2;
+            _velFeetGlobalGoal(2, i) = sin((*_phase)(i) * 2 * M_PI) * 2 * M_PI * _gaitHeight/2;
         }
     }
     _posFeetGlobalGoal(1, 0) = 0.2;
@@ -56,9 +62,56 @@ void State_StepTest::run()
     tar_pos.head(5) = _ctrlComp->_robot->getQ(endposd_l, 0);
     tar_pos.segment(5,5) = _ctrlComp->_robot->getQ(endposd_r, 1);
     // std::cout << "foot_des: " << endposd_l.transpose() << std::endl;
-    _lowCmd->setSwingGain(0);
-    _lowCmd->setSwingGain(1);
     _lowCmd->setQ(tar_pos);
+    Eigen::Matrix<double, 19, 1> tar_vel;
+    tar_vel.setZero();
+    Eigen::Matrix<double, 6, 5> Jl = _ctrlComp->_robot->leg_Jacobian(_q.col(0), 0);
+    Eigen::Matrix<double, 6, 5> Jr = _ctrlComp->_robot->leg_Jacobian(_q.col(1), 1);
+    Mat3 Rl = _ctrlComp->_robot->T_foot[0].block(0, 0, 3, 3);
+    Mat3 Rr = _ctrlComp->_robot->T_foot[1].block(0, 0, 3, 3);
+    Eigen::Matrix<double, 6, 2>
+        _velFeetAnkel;
+    _velFeetAnkel.setZero();
+    _velFeetAnkel.col(0).tail(3) = Rl.transpose() * _velFeetGlobalGoal.col(0);                 // coordinate ankle
+    _velFeetAnkel.col(1).tail(3) = Rr.transpose() * _velFeetGlobalGoal.col(1);                 // coordinate ankle
+    // std::cout << "_velFeetAnkel: " << std::endl
+    //           << _velFeetGlobalGoal.transpose() << std::endl;
+    Mat6 X_fl,
+        X_fr;
+    X_fl.setIdentity();
+    X_fr.setIdentity();
+    for (int i = 0; i < 5; i++)
+    {
+        X_fl = X_fl * _ctrlComp->_robot->X_dwtree[i];
+    }
+    for (int i = 5; i < 10; i++)
+    {
+        X_fr = X_fr * _ctrlComp->_robot->X_dwtree[i];
+    }
+    Eigen::Matrix<double, 6, 2> xvel;
+    xvel.col(0) = X_fl * _velFeetAnkel.col(0); // coordinate base
+    xvel.col(1) = X_fr * _velFeetAnkel.col(1);
+
+    Eigen::Matrix<double, 5, 6> J_T;
+    J_T = Jl.transpose();
+    Eigen::Matrix<double, 5, 5> J_TJ;
+    J_TJ = J_T * Jl;
+    Eigen::Matrix<double, 5, 6> Jl_pesoinv, Jr_pesoinv;
+    Jl_pesoinv = J_TJ.inverse() * J_T;
+
+    J_T = Jr.transpose();
+    J_TJ = J_T * Jr;
+    Jr_pesoinv = J_TJ.inverse() * J_T;
+
+    tar_vel.setZero();
+    tar_vel.segment(0, 5) = Jl_pesoinv * xvel.col(0);
+    tar_vel.segment(5, 5) = Jr_pesoinv * xvel.col(1);
+    _lowCmd->setQd(tar_vel);
+    // std::cout << "tar_vel: " << tar_vel.transpose() << std::endl;
+    // _lowCmd->setZeroGain(0);
+    // _lowCmd->setZeroGain(1);
+    // std::cout << "_posFeetGlobalGoal: " << std::endl
+    //           << _posFeetGlobalGoal << std::endl;
     // std::cout << "pos: " << endposd_l.transpose() << std::endl;
 
     // std::cout << "des pos" << std::endl
@@ -100,14 +153,14 @@ void State_StepTest::calcTau()
     // _forceFeetGlobal = -_balCtrl->calF(_ddPcd, _dWbd, _B2G_RotMat, _posFeet2BGlobal, *_contact);
     _forceFeetGlobal.setZero();
     _posFeetGlobal = _est->getFeetPos();
-    
     _velFeetGlobal = _est->getFeetVel();
     _KdSwing.setZero();
+    
     for (int i(0); i < 2; ++i)
     {
         if ((*_contact)(i) == 0)
         {
-            _forceFeetGlobal.col(i) = _KpSwing * (_posFeetGlobalGoal.col(i) - _posFeetGlobal.col(i)) + _KdSwing * (_velFeetGlobalGoal.col(i) - _velFeetGlobal.col(i));
+            _forceFeetGlobal.col(i) = _KpSwing * ( _posFeetGlobalGoal.col(i) - _posFeetGlobal.col(i)) + _KdSwing * (_velFeetGlobalGoal.col(i) - _velFeetGlobal.col(i));
         }
         else
         {
@@ -122,8 +175,6 @@ void State_StepTest::calcTau()
     Mat3 Rr = _ctrlComp->_robot->T_foot[1].block(0, 0, 3, 3);
     Eigen::Matrix<double, 6, 2> _forceFeetAnkel;
     _forceFeetAnkel.setZero();
-    Rl.setIdentity();
-    Rr.setIdentity();
     _forceFeetAnkel.col(0).tail(3) = Rl.transpose() * _forceFeetBody.col(0); // coordinate ankle
     _forceFeetAnkel.col(1).tail(3) = Rr.transpose() * _forceFeetBody.col(1); // coordinate ankle
     // std::cout << "_forceFeetAnkel" << std::endl
@@ -131,6 +182,7 @@ void State_StepTest::calcTau()
 
     Mat6 X_fl, X_fr;
     X_fl.setIdentity();
+    X_fr.setIdentity();
     for (int i = 0; i < 5; i++)
     {
         X_fl = X_fl * _ctrlComp->_robot->X_dwtree[i];
@@ -148,5 +200,6 @@ void State_StepTest::calcTau()
     torque.setZero();
     torque.segment(0, 5) = Jl.transpose() * force.col(0);
     torque.segment(5, 5) = Jr.transpose() * force.col(1);
+    // std::cout << "tau: " << torque.transpose() << std::endl;
     _lowCmd->setTau(torque);
 }

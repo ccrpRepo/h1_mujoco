@@ -181,20 +181,20 @@ struct LowlevelCmd
     void setSwingGain(int legID)
     {
         motorCmd[legID * 5 + 0].mode = 10;
-        motorCmd[legID * 5 + 0].Kp = 100;
-        motorCmd[legID * 5 + 0].Kd = 2;
+        motorCmd[legID * 5 + 0].Kp = 200;
+        motorCmd[legID * 5 + 0].Kd = 50;
         motorCmd[legID * 5 + 1].mode = 10;
-        motorCmd[legID * 5 + 1].Kp = 100;
-        motorCmd[legID * 5 + 1].Kd = 2;
+        motorCmd[legID * 5 + 1].Kp = 200;
+        motorCmd[legID * 5 + 1].Kd = 50;
         motorCmd[legID * 5 + 2].mode = 10;
-        motorCmd[legID * 5 + 2].Kp = 100;
-        motorCmd[legID * 5 + 2].Kd = 2;
+        motorCmd[legID * 5 + 2].Kp = 200;
+        motorCmd[legID * 5 + 2].Kd = 50;
         motorCmd[legID * 5 + 3].mode = 10;
-        motorCmd[legID * 5 + 3].Kp = 100;
-        motorCmd[legID * 5 + 3].Kd = 2;
+        motorCmd[legID * 5 + 3].Kp = 200;
+        motorCmd[legID * 5 + 3].Kd = 50;
         motorCmd[legID * 5 + 4].mode = 10;
-        motorCmd[legID * 5 + 4].Kp = 100;
-        motorCmd[legID * 5 + 4].Kd = 2;
+        motorCmd[legID * 5 + 4].Kp = 200;
+        motorCmd[legID * 5 + 4].Kd = 50;
     }
 };
 

@@ -115,11 +115,11 @@ void WaveGenerator::calcWave(Vec2 &phase, VecInt2 &contact, WaveStatus status)
     else if (status == WaveStatus::SWING_ALL)
     {
         contact.setZero();
-        phase << 0.5, 0.5;
+        phase << 0, 0;
     }
     else if (status == WaveStatus::STANCE_ALL)
     {
         contact.setOnes();
-        phase << 0.5, 0.5;
+        phase << 0, 0;
     }
 }
