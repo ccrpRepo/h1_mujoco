@@ -77,6 +77,7 @@ void State_FixedHang::enter()
 void State_FixedHang::run()
 {
     // std::cout << "passive mode" << std::endl;
+    
 }
 
 void State_FixedHang::exit()
@@ -89,6 +90,14 @@ FSMStateName State_FixedHang::checkChange()
     {
         return FSMStateName::STEPTEST;
         // return FSMStateName::SWINGTEST;
+    }
+    else if (_lowState->userCmd == UserCommand::L1_X)
+    {
+        return FSMStateName::DYNAMICTEST;
+    }
+    else if (_lowState->userCmd == UserCommand::L2_B)
+    {
+        return FSMStateName::PASSIVE;
     }
     else
     {

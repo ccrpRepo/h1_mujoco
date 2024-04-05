@@ -146,6 +146,25 @@ struct LowlevelCmd
         motorCmd[legID * 5 + 4].Kp = 0;
         motorCmd[legID * 5 + 4].Kd = 0;
     }
+    void setWholeZeroGain()
+    {
+        for (int i = 0; i < 19;i++)
+        {
+            motorCmd[i].mode = 10;
+            motorCmd[i].Kp = 0;
+            motorCmd[i].Kd = 0;
+        }
+            
+    }
+    void setWholeSmallGain()
+    {
+        for (int i = 0; i < 19; i++)
+        {
+            motorCmd[i].mode = 10;
+            motorCmd[i].Kp = 0.3;
+            motorCmd[i].Kd = 0;
+        }
+    }
     void setZeroGain()
     {
         for (int i(0); i < 2; ++i)

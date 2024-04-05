@@ -8,6 +8,7 @@ FSM::FSM(CtrlComponents *ctrlComp)
     _stateList.swingTest = new State_SwingTest(_ctrlComp);
     _stateList.stepTest = new State_StepTest(_ctrlComp);
     _stateList.fixedHang = new State_FixedHang(_ctrlComp);
+    _stateList.dynamicTest = new State_DynamicTest(_ctrlComp);
     _stateList.invalid = nullptr;
 
     initialize();
@@ -84,6 +85,9 @@ FSMState *FSM::getNextState(FSMStateName stateName)
         break;
     case FSMStateName::FIXEDHANG:
         return _stateList.fixedHang;
+        break;
+    case FSMStateName::DYNAMICTEST:
+        return _stateList.dynamicTest;
         break;
 
     // case FSMStateName::FIXEDSTAND:

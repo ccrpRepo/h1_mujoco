@@ -35,6 +35,9 @@ void IOmujoco::sendCmd(const LowlevelCmd *lowCmd)
                     + _lowCmd.motorcmd[j].Kd * (_lowCmd.motorcmd[j].dq - _lowState.motorstate[j].dq);
         // std::cout << _d->ctrl[j] << ", ";
     }
+    // _d->ctrl[10] = _lowCmd.motorcmd[10].tau 
+    // + _lowCmd.motorcmd[10].Kp * (2 - _lowState.motorstate[10].q);
+    // _d->ctrl[10] = 200;
     // std::cout << std::endl;
 }
 

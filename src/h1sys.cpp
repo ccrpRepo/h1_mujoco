@@ -111,7 +111,7 @@ void Init_window()
     glfwSetCursorPosCallback(window, mouse_move);
     glfwSetMouseButtonCallback(window, mouse_button);
     glfwSetScrollCallback(window, scroll);
-    double arr_view[] = {90, -90, 10, 0.000000, 0.000000, 0.000000};
+    double arr_view[] = {150, -20, 4, 0.000000, 0.000000, 1.000000};
     cam.azimuth = arr_view[0];
     cam.elevation = arr_view[1];
     cam.distance = arr_view[2];

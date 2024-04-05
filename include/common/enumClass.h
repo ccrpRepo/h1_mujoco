@@ -57,7 +57,8 @@ enum class FSMStateName
     BALANCETEST,
     SWINGTEST,
     STEPTEST,
-    FIXEDHANG
+    FIXEDHANG,
+    DYNAMICTEST
 };
 
 #endif // ENUMCLASS_H

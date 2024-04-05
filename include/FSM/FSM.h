@@ -10,6 +10,7 @@
 #include "FSM/State_SwingTest.h"
 #include "FSM/State_StepTest.h"
 #include "FSM/State_FixedHang.h"
+#include "FSM/State_DynamicTest.h"
 
 struct FSMStateList
 {
@@ -18,18 +19,21 @@ struct FSMStateList
     State_SwingTest *swingTest;
     State_StepTest *stepTest;
     State_FixedHang *fixedHang;
+    State_DynamicTest *dynamicTest;
     // State_FixedStand *fixedStand;
     // State_FreeStand *freeStand;
     // State_Trotting *trotting;
     // State_BalanceTest *balanceTest;
 
-    void deletePtr()
+    void
+    deletePtr()
     {
         delete invalid;
         delete passive;
         delete swingTest;
         delete stepTest;
         delete fixedHang;
+        delete dynamicTest;
     }
 };
 
