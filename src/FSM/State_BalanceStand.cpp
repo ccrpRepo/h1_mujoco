@@ -23,6 +23,8 @@ void State_BalanceStand::enter()
     _lowCmd->setSimStanceGain(1);
     _lowCmd->setArmGain();
     _lowCmd->setTorsoGain();
+    _lowCmd->motorCmd[1].Kp = 1000;
+    _lowCmd->motorCmd[6].Kp = 1000;
     // _lowCmd->setZeroGain(0);
     // _lowCmd->setZeroGain(1);
 

@@ -123,7 +123,7 @@ bool FSM::checkSafty()
     // The angle with z axis less than 60 degree
     if (_ctrlComp->lowState->getRotMat()(2, 2) < 0.5)
     {
-        return true;
+        return false;
     }
     else
     {
