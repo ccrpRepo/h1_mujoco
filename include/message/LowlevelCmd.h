@@ -194,20 +194,20 @@ struct LowlevelCmd
     void setStableGain(int legID)
     {
         motorCmd[legID * 5 + 0].mode = 10;
-        motorCmd[legID * 5 + 0].Kp = 0.8;
-        motorCmd[legID * 5 + 0].Kd = 0.8;
+        motorCmd[legID * 5 + 0].Kp = 10;
+        motorCmd[legID * 5 + 0].Kd = 2;
         motorCmd[legID * 5 + 1].mode = 10;
-        motorCmd[legID * 5 + 1].Kp = 0.8;
-        motorCmd[legID * 5 + 1].Kd = 0.8;
+        motorCmd[legID * 5 + 1].Kp = 10;
+        motorCmd[legID * 5 + 1].Kd = 2;
         motorCmd[legID * 5 + 2].mode = 10;
-        motorCmd[legID * 5 + 2].Kp = 0.8;
-        motorCmd[legID * 5 + 2].Kd = 0.8;
+        motorCmd[legID * 5 + 2].Kp = 10;
+        motorCmd[legID * 5 + 2].Kd = 2;
         motorCmd[legID * 5 + 3].mode = 10;
-        motorCmd[legID * 5 + 3].Kp = 0.8;
-        motorCmd[legID * 5 + 3].Kd = 0.8;
+        motorCmd[legID * 5 + 3].Kp = 10;
+        motorCmd[legID * 5 + 3].Kd = 2;
         motorCmd[legID * 5 + 4].mode = 10;
-        motorCmd[legID * 5 + 4].Kp = 0.8;
-        motorCmd[legID * 5 + 4].Kd = 0.8;
+        motorCmd[legID * 5 + 4].Kp = 10;
+        motorCmd[legID * 5 + 4].Kd = 2;
     }
     void setStableGain()
     {

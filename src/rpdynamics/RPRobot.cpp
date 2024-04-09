@@ -106,7 +106,10 @@ void Robot::Update_Model()
         {
             Mat4 T = Flt_Transform();
             _base->_fltjoint->_T_Base2Wrd = T;
+            T_base = T;
             AdjointT(T, _base->_fltjoint->_X_Base2Wrd);
+            X_base = _base->_fltjoint->_X_Base2Wrd;
+            
             Mat3 R = T.block(0, 0, 3, 3);
             Vec3 p = T.block(0, 3, 3, 1);
             R.transposeInPlace();
@@ -116,6 +119,7 @@ void Robot::Update_Model()
             T.block(0, 3, 3, 1) = p;
             _base->_fltjoint->_T_Wrd2Base = T;
             AdjointT(T, _base->_fltjoint->_X_Wrd2Base);
+            
             // Mat6 X_temp = _base->_fltjoint->_X_Wrd2Base * _base->_fltjoint->_X_Base2Wrd;
             // std::cout << "X_temp: " << std::endl
             //           << X_temp << std::endl;
@@ -920,6 +924,38 @@ Mat52 h1Robot::get_footEnd()
     footend.col(1).tail(2) = Vec2(_q[5], xita_rf);   // left foot yaw and pitch
 
     return footend;
+}
+
+Vec32 h1Robot::getFeetPosIdeal()
+{
+    Vec32 footEndIdea;
+
+    footEndIdea << 0.0395,  0.0395,
+                   0.2029, -0.2029, 
+                  -0.9110, -0.9110;
+
+    return footEndIdea;
+}
+
+Vec2 h1Robot::getRobVelLimitX()
+{
+    Vec2 robVelLimitX;
+    robVelLimitX << -0.4, 0.4;
+    return robVelLimitX;
+}
+
+Vec2 h1Robot::getRobVelLimitY()
+{
+    Vec2 robVelLimitY;
+    robVelLimitY << -0.3, 0.3;
+    return robVelLimitY;
+}
+
+Vec2 h1Robot::getRobVelLimitYaw()
+{
+    Vec2 robVelLimitYaw;
+    robVelLimitYaw << -0.5, 0.5;
+    return robVelLimitYaw;
 }
 
 // endid = 0 left leg

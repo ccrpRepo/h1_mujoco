@@ -74,6 +74,12 @@ void State_BalanceStand::enter()
 void State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
+
+    Vec32 foot_ideaEnd = _ctrlComp->_robot->getFeetPosIdeal();
+
+    std::cout << "foot_ideaEnd: " << std::endl
+              << foot_ideaEnd << std::endl;
+
     _wbc->set_contact_frition(0.03);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
     Mat4 T_base;

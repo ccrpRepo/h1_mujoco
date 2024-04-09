@@ -106,6 +106,8 @@ class Robot
         Mat4 Flt_Transform();
 
         Mat4 T_foot[2];
+        Mat4 T_base;
+        Mat6 X_base;
 
         void set_q(double q[])
         {
@@ -196,6 +198,11 @@ class h1Robot : public Robot
         Vec6 getFootVelocity(int endid);
         Vec6 getFeet2BVelocity(int endid, Coordiante frame);
         Mat52 get_footEnd();
+
+        Vec32 getFeetPosIdeal();
+        Vec2 getRobVelLimitX();
+        Vec2 getRobVelLimitY();
+        Vec2 getRobVelLimitYaw();
         void witre_urdfData();
         void build_h1();
         
