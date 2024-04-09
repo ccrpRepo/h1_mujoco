@@ -118,6 +118,7 @@ void State_FixedHang::run()
 
 void State_FixedHang::exit()
 {
+    
 }
 
 FSMStateName State_FixedHang::checkChange()

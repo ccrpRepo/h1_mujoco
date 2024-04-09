@@ -118,8 +118,14 @@ public:
         // quaxyz[4] = 0;
         // quaxyz[5] = 0;
         // quaxyz[6] = 0;
-
+        Vec3 anglar_v;
+        anglar_v << v_base[0], v_base[1], v_base[2];
+        anglar_v = G2B_RotMat * anglar_v;
         EstVelocity = G2B_RotMat * EstVelocity;
+
+        v_base[0] = anglar_v(0);
+        v_base[1] = anglar_v(1);
+        v_base[2] = anglar_v(2);
         v_base[3] = EstVelocity(0);
         v_base[4] = EstVelocity(1);
         v_base[5] = EstVelocity(2);

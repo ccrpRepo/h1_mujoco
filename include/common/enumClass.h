@@ -54,11 +54,12 @@ enum class FSMStateName
     // FIXEDSTAND,
     // FREESTAND,
     // TROTTING,
-    BALANCETEST,
+    // BALANCETEST,
     SWINGTEST,
     STEPTEST,
     FIXEDHANG,
-    DYNAMICTEST
+    DYNAMICTEST,
+    BALANCESTAND
 };
 
 #endif // ENUMCLASS_H

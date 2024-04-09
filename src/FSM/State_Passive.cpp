@@ -5,6 +5,7 @@ State_Passive::State_Passive(CtrlComponents *ctrlComp)
 
 void State_Passive::enter()
 {
+    // std::cout << "enter passive mode" << std::endl;
     if (_ctrlComp->ctrlPlatform == CtrlPlatform::MUJOCO)
     {
         for (int i = 0; i < 19; i++)
@@ -46,7 +47,7 @@ FSMStateName State_Passive::checkChange()
 {
     if (_lowState->userCmd == UserCommand::L2_A)
     {
-        return FSMStateName::FIXEDHANG;
+        return FSMStateName::BALANCESTAND;
         // return FSMStateName::SWINGTEST;
     }
     else

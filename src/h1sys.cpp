@@ -122,6 +122,7 @@ void Init_window()
 
 int main(int argc, char **argv)
 {
+    std::cout << std::fixed << std::setprecision(4);
     IOinterface *ioInter;
     CtrlPlatform ctrlPlat;
 
