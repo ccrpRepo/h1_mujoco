@@ -172,11 +172,13 @@ void WBC::friction_cone_task(VecInt2 contact)
     {
         B.block(9 * i, 5 * i, 9, 5) = _Ffri;
     }
+    Mat3 Iden;
+    Iden.setIdentity(3, 3);
     for (int i = 0; i < 2; i++)
     {
         if (contact(i) == 1)
         {
-            ref_R_s_ext.block(row_index * 5 + 2, row_index * 5 + 2, 3, 3) = _dy->_ref_R_s[i];
+            ref_R_s_ext.block(row_index * 5 + 2, row_index * 5 + 2, 3, 3) = _dy->_ref_R_s[i]; //_dy->_ref_R_s[i];
             row_index++;
         }
     }

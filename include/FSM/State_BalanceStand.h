@@ -16,7 +16,8 @@ public:
     
 
 private:
-
+    Vec3 _init_pos;
+    Mat3 _init_R_base;
     Estimator *_est;
     h1Robot *_robot;
     VecInt2 *_contact;

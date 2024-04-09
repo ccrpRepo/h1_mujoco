@@ -8,6 +8,7 @@
 #include "rpdynamics/dynamics.h"
 #include "gait/WaveGenerator.h"
 #include "control/Estimator.h"
+#include "control/WBCController.h"
 
 #include <string>
 #include <iostream>
@@ -21,6 +22,7 @@ public:
         _d = d;
         _m = m;
         _robot = dy->_robot;
+        _wbc = new WBC(dy_);
         lowCmd = new LowlevelCmd();
         lowState = new LowlevelState();
         contact = new VecInt2;
@@ -48,6 +50,7 @@ public:
     WaveGenerator *waveGen;
     Estimator *estimator;
     // BalanceCtrl *balCtrl;
+    WBC *_wbc;
     Dynamics *dy;
     double q[19];
     double qd[19];

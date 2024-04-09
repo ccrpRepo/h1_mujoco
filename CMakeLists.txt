@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 11)
 set(USE_GL 1)
 set(BIN_NAME ${PROJECT_NAME})
 
+set(CMAKE_BUILD_TYPE "Release")
+
 # find_package(Eigen3 REQUIRED)
 
 #Mujoco paths

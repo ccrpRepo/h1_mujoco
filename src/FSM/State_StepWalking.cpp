@@ -6,7 +6,7 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
       _contact(ctrlComp->contact),
       _phase(ctrlComp->phase)
 {
-    _wbc = new WBC(_ctrlComp->dy);
+    _wbc = _ctrlComp->_wbc;
 }
 
 void State_StepWalking::enter()
@@ -16,13 +16,28 @@ void State_StepWalking::enter()
 
 void State_StepWalking::run()
 {
+    _ctrlComp->_robot->Update_Model();
+    _wbc->set_contact_frition(0.35);
+
+    
+
 }
 
 void State_StepWalking::exit()
 {
+    _ctrlComp->ioInter->zeroCmdPanel();
+    _ctrlComp->setAllSwing();
 }
 
 
 FSMStateName State_StepWalking::checkChange()
 {
+    if (_lowState->userCmd == UserCommand::L2_B)
+    {
+        return FSMStateName::PASSIVE;
+    }
+    else
+    {
+        return FSMStateName::STEPWALKING;
+    }
 }
