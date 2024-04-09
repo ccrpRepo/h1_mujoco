@@ -23,8 +23,8 @@ void State_BalanceStand::enter()
     _lowCmd->setSimStanceGain(1);
     _lowCmd->setArmGain();
     _lowCmd->setTorsoGain();
-    _lowCmd->motorCmd[1].Kp = 1000;
-    _lowCmd->motorCmd[6].Kp = 1000;
+    // _lowCmd->motorCmd[1].Kp = 1000;
+    // _lowCmd->motorCmd[6].Kp = 1000;
     // _lowCmd->setZeroGain(0);
     // _lowCmd->setZeroGain(1);
 
@@ -67,6 +67,7 @@ void State_BalanceStand::enter()
 
 void State_BalanceStand::run()
 {
+    _wbc->set_contact_frition(0.03);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
     Mat4 T_base;
     T_base.setIdentity(4, 4);

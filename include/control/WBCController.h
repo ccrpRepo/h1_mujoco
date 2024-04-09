@@ -121,6 +121,8 @@ public:
     void solve_QProblem(MatX A, MatX b, MatX D, MatX f);
     VecX solve_QProblem_Ab(MatX A, MatX b);
 
+    void set_contact_frition(double fri);
+
 private:
 };
 

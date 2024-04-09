@@ -203,6 +203,20 @@ void WBC::friction_cone_task(VecInt2 contact)
     _ineq_task = new ineq_Task(D, f);
 }
 
+void WBC::set_contact_frition(double fri)
+{
+    _frition = fri;
+    _Ffri << 1, 0, 0, 0, 0,
+        -1, 0, 0, 0, 0,
+        0, 1, 0, 0, -_frition,
+        0, -1, 0, 0, -_frition,
+        0, 0, -1, 0, -_frition,
+        0, 0, 1, 0, -_frition,
+        0, 0, 0, -1, -_frition,
+        0, 0, 0, 1, -_frition,
+        0, 0, 0, 0, -1;
+}
+
 Vec12 WBC::inverse_dynamics(Vec18 qdd, Vec34 footforce, VecInt4 contact)
 {
     /****************************************************************/

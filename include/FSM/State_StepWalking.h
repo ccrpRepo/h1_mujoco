@@ -1,22 +1,20 @@
-#ifndef STATE_BALANCESTAND_H
-#define STATE_BALANCESTAND_H
+#ifndef STATE_STEPWALKING_H
+#define STATE_STEPWALKING_H
 
 #include "FSM/FSMState.h"
 #include "control/WBCController.h"
 
-class State_BalanceStand : public FSMState
+class State_StepWalking : public FSMState
 {
 public:
-    State_BalanceStand(CtrlComponents *ctrlComp);
-    ~State_BalanceStand(){};
+    State_StepWalking(CtrlComponents *ctrlComp);
+    ~State_StepWalking(){};
     void enter();
     void run();
     void exit();
     FSMStateName checkChange();
-    
 
 private:
-
     Estimator *_est;
     h1Robot *_robot;
     VecInt2 *_contact;
