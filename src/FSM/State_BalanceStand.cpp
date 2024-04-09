@@ -34,7 +34,7 @@ void State_BalanceStand::enter()
     _ctrlComp->_d->qpos[3] = 0.7071;
     _ctrlComp->_d->qpos[4] = 0;
     _ctrlComp->_d->qpos[5] = 0;
-    _ctrlComp->_d->qpos[6] = 0.7071;
+    _ctrlComp->_d->qpos[6] = -0.7071;
 
     _ctrlComp->_d->qpos[7] = 0;
     _ctrlComp->_d->qpos[8] = 0;
@@ -69,16 +69,13 @@ void State_BalanceStand::enter()
     _init_pos = _ctrlComp->estimator->getPosition();
     _init_R_base = _ctrlComp->lowState->getRotMat();
     std::cout << "_init_pos: " << _init_pos.transpose() << std::endl;
+    std::cout << "_init_R: " << std::endl
+              << _init_R_base << std::endl;
 }
 
 void State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
-
-    Vec32 foot_ideaEnd = _ctrlComp->_robot->getFeetPosIdeal();
-
-    std::cout << "foot_ideaEnd: " << std::endl
-              << foot_ideaEnd << std::endl;
 
     _wbc->set_contact_frition(0.03);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
@@ -89,28 +86,35 @@ void State_BalanceStand::run()
     Mat4 T_tan = logm(T_base);
     Vec3 anglar_acc;
     anglar_acc << -T_tan(1, 2), T_tan(0, 2), -T_tan(0, 1);
+    anglar_acc = _ctrlComp->lowState->getRotMat().transpose() * anglar_acc;
     // std::cout << "ang: " << anglar_acc.transpose() << std::endl;
     Vec3 base_pos = _ctrlComp->estimator->getPosition();
     VecInt2 contact;
     contact << 1, 1;
     _wbc->dynamics_consistence_task(contact);
     _wbc->closure_constrain_task();
+
+    Vec3 pos_err = _init_pos - base_pos;
+    pos_err = _ctrlComp->lowState->getRotMat().transpose() * pos_err;
+
     Vec2 ddr_xy;
     Vec2 des_xy = _init_pos.head(2);
-    ddr_xy = 20.0 * (des_xy - base_pos.head(2));
+    ddr_xy = 20.0 * pos_err.head(2);
     // std::cout << "ddr_xy: " << ddr_xy.transpose() << std::endl;
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec32 swing_acc;
     swing_acc.setZero();
     _wbc->swing_foot_motion_task(swing_acc, contact);
     double yaw_acc = 0, height_acc = 0;
-    height_acc = 20 * (0.98 - base_pos(2));
+    height_acc = 20 * pos_err(2);
     yaw_acc = 20 * anglar_acc(2); //
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
     double roll_acc = 0, pitch_acc = 0;
     
-    roll_acc = anglar_acc(0);
-    pitch_acc = 20 * anglar_acc(1);
+    roll_acc = 50 * anglar_acc(0);
+    // std::cout << "roll:" << anglar_acc(0) << std::endl;
+    pitch_acc = 50 * anglar_acc(1);
+    // std::cout << "pitch:" << anglar_acc(1) << std::endl;
     // std::cout << "anglar_acc: " << anglar_acc.transpose() << std::endl;
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
     _wbc->torque_limit_task();
