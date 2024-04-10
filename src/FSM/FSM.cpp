@@ -10,6 +10,7 @@ FSM::FSM(CtrlComponents *ctrlComp)
     _stateList.fixedHang = new State_FixedHang(_ctrlComp);
     _stateList.dynamicTest = new State_DynamicTest(_ctrlComp);
     _stateList.balanceStand = new State_BalanceStand(_ctrlComp);
+    _stateList.stepwalking = new State_StepWalking(_ctrlComp);
     _stateList.invalid = nullptr;
 
     initialize();
@@ -51,8 +52,10 @@ void FSM::run()
         {
             _mode = FSMMode::CHANGE;
             _nextState = getNextState(_nextStateName);
-            std::cout << "Switched from " << _currentState->_stateNameString
-                      << " to " << _nextState->_stateNameString << std::endl;
+
+            std::cout
+                << "Switched from " << _currentState->_stateNameString
+                << " to " << _nextState->_stateNameString << std::endl;
         }
     }   
     else if (_mode == FSMMode::CHANGE)
@@ -92,6 +95,9 @@ FSMState *FSM::getNextState(FSMStateName stateName)
         break;
     case FSMStateName::BALANCESTAND:
         return _stateList.balanceStand;
+        break;
+    case FSMStateName::STEPWALKING:
+        return _stateList.stepwalking;
         break;
 
     // case FSMStateName::FIXEDSTAND:

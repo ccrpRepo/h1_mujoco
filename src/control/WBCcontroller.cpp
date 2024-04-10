@@ -91,6 +91,7 @@ void WBC::desired_torso_motion_task(Vec2 ddr_xy)
 
 // swing_acc only contain swing foot acceleration, which means
 // the swing cols of swing_acc must set zero when using this function
+// swing foot in base coordinate
 void WBC::swing_foot_motion_task(Vec32 swing_acc, VecInt2 contact)
 {
     MatX A, b;

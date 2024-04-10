@@ -5,6 +5,8 @@ GaitGenerator::GaitGenerator(CtrlComponents *ctrlComp)
       _phase(ctrlComp->phase), _contact(ctrlComp->contact),
       _robot(ctrlComp->_robot), _state(ctrlComp->lowState)
 {
+
+    _feetCal = new FeetEndCal(ctrlComp);
     _firstRun = true;
 }
 
@@ -47,7 +49,6 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
         else
         {
             _endP.col(i) = _feetCal->calFootPos(i, _vxyGoal, _dYawGoal, (*_phase)(i));
-
             // std::cout << "endp" << std::endl
             //           << _endP << std::endl;
 

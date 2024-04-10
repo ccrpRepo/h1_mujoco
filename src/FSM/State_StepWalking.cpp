@@ -54,52 +54,52 @@ void State_StepWalking::run()
     _G2B_RotMat = _B2G_RotMat.transpose();
     _yaw = _lowState->getYaw();
     _dYaw = _lowState->getDYaw();
-
     _userValue = _lowState->userValue;
 
     getUserCmd();
     calcCmd();
-
+    
     _gait->setGait(_vCmdGlobal.segment(0, 2), _wCmdGlobal(2), _gaitHeight);
     _gait->run(_posFeetGlobalGoal, _velFeetGlobalGoal);
 
     calcQQd();
     calcTau();
 
-    if (checkStepOrNot())
-    {
-        _ctrlComp->setStartWave();
-    }
-    else
-    {
-        // _ctrlComp->setAllStance();
-        _ctrlComp->setStartWave();
-    }
+    // if (checkStepOrNot())
+    // {
+    //     _ctrlComp->setStartWave();
+    // }
+    // else
+    // {
+    //     // _ctrlComp->setAllStance();
+    //     _ctrlComp->setStartWave();
+    // }
 
-    Eigen::Matrix<double, 19, 1> q_des, qd_des;
-    q_des.setZero();
-    qd_des.setZero();
+    // Eigen::Matrix<double, 19, 1> q_des, qd_des;
+    // q_des.setZero();
+    // qd_des.setZero();
 
-    q_des.block(0, 0, 5, 1) = _qGoal.col(0);
-    q_des.block(5, 0, 5, 1) = _qGoal.col(1);
+    // q_des.block(0, 0, 5, 1) = _qGoal.col(0);
+    // q_des.block(5, 0, 5, 1) = _qGoal.col(1);
 
-    qd_des.block(0, 0, 5, 1) = _qdGoal.col(0);
-    qd_des.block(5, 0, 5, 1) = _qdGoal.col(1);
+    // qd_des.block(0, 0, 5, 1) = _qdGoal.col(0);
+    // qd_des.block(5, 0, 5, 1) = _qdGoal.col(1);
 
-    _lowCmd->setQ(q_des);
-    _lowCmd->setQd(qd_des);
+    // _lowCmd->setTau(_tau);
+    // _lowCmd->setQ(q_des);
+    // _lowCmd->setQd(qd_des);
 
-    for (int i(0); i < 2; ++i)
-    {
-        if ((*_contact)(i) == 0)
-        {
-            _lowCmd->setSwingGain(i);
-        }
-        else
-        {
-            _lowCmd->setStableGain(i);
-        }
-    }
+    // for (int i(0); i < 2; ++i)
+    // {
+    //     if ((*_contact)(i) == 0)
+    //     {
+    //         _lowCmd->setSwingGain(i);
+    //     }
+    //     else
+    //     {
+    //         _lowCmd->setStableGain(i);
+    //     }
+    // }
 }
 
 bool State_StepWalking::checkStepOrNot()
@@ -272,6 +272,7 @@ void State_StepWalking::calcTau()
     ddr_xy << ddp_base(0) * 0.3, ddp_base(1) * 1.5;
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
+    
     for (int i = 0; i < 2; i++)
     {
         if ((*_contact)(i) == 1)
@@ -292,8 +293,5 @@ void State_StepWalking::calcTau()
     // long long start_time = getSystemTime();
     _wbc->solve_HOproblem();
 
-    Eigen::Matrix<double, 19, 1> tau;
-    tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
-
-    _lowCmd->setTau(tau);
+    _tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
 }

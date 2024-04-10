@@ -53,9 +53,9 @@ private:
     Vec3 _ddPcd, _dWbd;
     Vec32 _forceFeetGlobal, _forceFeetBody;
     Mat52 _qGoal, _qdGoal;
-    Vec12 _tau;
-    Vec12 _tau_wbc, _tau_last; 
-    
+    Eigen::Matrix<double, 19, 1> _tau;
+    Eigen::Matrix<double, 19, 1> _tau_wbc, _tau_last;
+
     // Rob State
     Vec3 _posBody, _velBody;
     double _yaw, _dYaw;
