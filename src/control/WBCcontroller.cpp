@@ -92,15 +92,17 @@ void WBC::desired_torso_motion_task(Vec2 ddr_xy)
 // swing_acc only contain swing foot acceleration, which means
 // the swing cols of swing_acc must set zero when using this function
 // swing foot in base coordinate
-void WBC::swing_foot_motion_task(Vec32 swing_acc, VecInt2 contact)
+void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact)
 {
     MatX A, b;
     Vec3 swing_acc_in_suc;
     int swing_num = 0;
+    int swing_index = 0;
     for (int i = 0; i < 2; i++)
     {
         if (contact(i) == 0)
         {
+            swing_index = i;
             swing_num++;
         }
     }
@@ -112,7 +114,40 @@ void WBC::swing_foot_motion_task(Vec32 swing_acc, VecInt2 contact)
     A.setZero(swing_num * 5, 44);
     b.setZero(swing_num * 5, 1);
 
-    _eq_task[3] = new eq_Task(A, b, false);
+    Vec6 foot_twist_f; //coordinate: foot
+    foot_twist_f.setZero();
+
+    /*************  求ry  ****************/
+    Mat4 T_foot;
+    T_foot.setIdentity();
+    Eigen::Matrix<double, 10, 1> q_leg;
+    for (int i = 0; i < 10; i++)
+    {
+        q_leg(i) = _dy->_q[i];
+    }
+    for (int i = 0 + 5 * swing_index; i < 5 + 5 * swing_index; i++)
+    {
+        T_foot = T_foot * _dy->_robot->T_dwtree[i];
+    }
+    foot_twist_f.tail(3) = T_foot.block(0, 0, 3, 3).transpose() * swing_acc;
+    Vec3 b_X_foot = T_foot.block(0, 0, 3, 1);
+    Vec3 b_Z_terrain = _dy->_robot->Flt_Transform().transpose().block(0, 2, 3, 1);
+    double xita = acos(b_X_foot.dot(b_Z_terrain) / b_X_foot.norm() * b_Z_terrain.norm());
+    foot_twist_f(1) = 10 * (M_PI / 2 - xita);
+    /*************************************/
+    /*************  求rz  ****************/
+    foot_twist_f(2) = 10 * (0 - q_leg(0 + swing_index * 5));
+    /*************************************/
+
+    Vec6 avp_foot2base = _dy->_ref_X_s[swing_index] * _dy->_avp[4 + swing_index * 5];
+    Vec6 base_twist_f = _dy->_ref_X_s[swing_index] * foot_twist_f;
+
+    MatX base_J_f = _dy->Cal_Geometric_Jacobain(4 + swing_index + 5, Coordiante::BASE);
+
+    A.block(0, 6, 5, 19) = base_J_f.block(1, 0, 5, 19);
+    b = foot_twist_f.tail(5) - avp_foot2base.tail(5);
+
+    _eq_task[3] = new eq_Task(A, b, true);
 }
 
 void WBC::body_yaw_height_task(double yaw_acc, double height_acc)

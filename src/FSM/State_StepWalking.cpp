@@ -7,6 +7,7 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
       _phase(ctrlComp->phase)
 {
     _wbc = _ctrlComp->_wbc;
+    // _wbc = new WBC(_ctrlComp->dy);
     _dy = _ctrlComp->dy;
     _gait = new GaitGenerator(ctrlComp);
 
@@ -61,7 +62,7 @@ void State_StepWalking::run()
     
     _gait->setGait(_vCmdGlobal.segment(0, 2), _wCmdGlobal(2), _gaitHeight);
     _gait->run(_posFeetGlobalGoal, _velFeetGlobalGoal);
-
+    std::cout << "contact: " << (*_contact).transpose() << std::endl;
     calcQQd();
     calcTau();
 
@@ -75,31 +76,31 @@ void State_StepWalking::run()
     //     _ctrlComp->setStartWave();
     // }
 
-    // Eigen::Matrix<double, 19, 1> q_des, qd_des;
-    // q_des.setZero();
-    // qd_des.setZero();
+    Eigen::Matrix<double, 19, 1> q_des, qd_des;
+    q_des.setZero();
+    qd_des.setZero();
 
-    // q_des.block(0, 0, 5, 1) = _qGoal.col(0);
-    // q_des.block(5, 0, 5, 1) = _qGoal.col(1);
+    q_des.block(0, 0, 5, 1) = _qGoal.col(0);
+    q_des.block(5, 0, 5, 1) = _qGoal.col(1);
 
-    // qd_des.block(0, 0, 5, 1) = _qdGoal.col(0);
-    // qd_des.block(5, 0, 5, 1) = _qdGoal.col(1);
+    qd_des.block(0, 0, 5, 1) = _qdGoal.col(0);
+    qd_des.block(5, 0, 5, 1) = _qdGoal.col(1);
 
     // _lowCmd->setTau(_tau);
-    // _lowCmd->setQ(q_des);
-    // _lowCmd->setQd(qd_des);
+    _lowCmd->setQ(q_des);
+    _lowCmd->setQd(qd_des);
 
-    // for (int i(0); i < 2; ++i)
-    // {
-    //     if ((*_contact)(i) == 0)
-    //     {
-    //         _lowCmd->setSwingGain(i);
-    //     }
-    //     else
-    //     {
-    //         _lowCmd->setStableGain(i);
-    //     }
-    // }
+    for (int i(0); i < 2; ++i)
+    {
+        if ((*_contact)(i) == 0)
+        {
+            _lowCmd->setSwingGain(i);
+        }
+        else
+        {
+            _lowCmd->setStableGain(i);
+        }
+    }
 }
 
 bool State_StepWalking::checkStepOrNot()
@@ -266,32 +267,36 @@ void State_StepWalking::calcTau()
 
     Vec3 dw_base = _G2B_RotMat * _dWbd;
     Vec3 ddp_base = _G2B_RotMat * _ddPcd;
-    _wbc->dynamics_consistence_task(*_contact);
-    _wbc->closure_constrain_task();
-    Vec2 ddr_xy;
-    ddr_xy << ddp_base(0) * 0.3, ddp_base(1) * 1.5;
-    _wbc->desired_torso_motion_task(ddr_xy);
-    Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
-    
-    for (int i = 0; i < 2; i++)
-    {
-        if ((*_contact)(i) == 1)
-        {
-            swingforceFeetBase.col(i).setZero();
-        }
-    }
+    // _wbc->dynamics_consistence_task(*_contact);
+    // _wbc->closure_constrain_task();
+    // Vec2 ddr_xy;
+    // ddr_xy << ddp_base(0) * 0.3, ddp_base(1) * 1.5;
+    // _wbc->desired_torso_motion_task(ddr_xy);
+    // Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
+    // Vec3 swingforce;
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     if ((*_contact)(i) == 1)
+    //     {
+    //         swingforceFeetBase.col(i).setZero();
+    //     }
+    //     else
+    //     {
+    //         swingforce = swingforceFeetBase.col(i);
+    //     }
+    // }
 
-    _wbc->swing_foot_motion_task(swingforceFeetBase, *_contact);
-    double yaw_acc = dw_base(2) * 1.4;     //
-    double height_acc = ddp_base(2) * 1.0; //
-    _wbc->body_yaw_height_task(yaw_acc, height_acc);
-    double roll_acc = dw_base(0) * 15.0;  //
-    double pitch_acc = dw_base(1) * 30.0; //
-    _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
-    _wbc->torque_limit_task();
-    _wbc->friction_cone_task(*_contact);
-    // long long start_time = getSystemTime();
-    _wbc->solve_HOproblem();
+    // _wbc->swing_foot_motion_task(swingforce, *_contact);
+    // double yaw_acc = dw_base(2) * 1.4;     //
+    // double height_acc = ddp_base(2) * 1.0; //
+    // _wbc->body_yaw_height_task(yaw_acc, height_acc);
+    // double roll_acc = dw_base(0) * 15.0;  //
+    // double pitch_acc = dw_base(1) * 30.0; //
+    // _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
+    // _wbc->torque_limit_task();
+    // _wbc->friction_cone_task(*_contact);
+    // // long long start_time = getSystemTime();
+    // _wbc->solve_HOproblem();
 
-    _tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
+    // _tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
 }

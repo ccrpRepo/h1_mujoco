@@ -44,7 +44,7 @@
   </asset>
 
   <worldbody>
-    <body name="pelvis" pos="0 0 1.5" childclass="h1">
+    <body name="pelvis" pos="0 0 2.2" childclass="h1">
       <inertial pos="-0.0002 4e-05 -0.04522"  mass="5.39" fullinertia='0.044582 0.0082464 0.049021 8.7034E-05 -1.9893E-05 4.021E-06' />
       <freejoint/>
       <geom class="visual" mesh="pelvis"/>

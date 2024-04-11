@@ -67,7 +67,7 @@ class Dynamics
     MatX Cal_Generalize_Bias_force(bool Gra_offset);
     MatX Cal_Generalize_Bias_force_Flt(bool Gra_offset);
     MatX Cal_Gravity_Term();
-    MatX Cal_Geometric_Jacobain(int ib, Coordiante coordinate, bool CHAIN);
+    MatX Cal_Geometric_Jacobain(int ib, Coordiante coordinate);
     MatX Cal_K_Flt(MatX &k);
 
     MatX Cal_inverse_kinematic_Numerical(Mat4 Td, int ib);

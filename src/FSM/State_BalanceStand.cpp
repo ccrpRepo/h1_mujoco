@@ -107,7 +107,7 @@ void State_BalanceStand::run()
     ddr_xy = 20.0 * pos_err.head(2);
     // std::cout << "ddr_xy: " << ddr_xy.transpose() << std::endl;
     _wbc->desired_torso_motion_task(ddr_xy);
-    Vec32 swing_acc;
+    Vec3 swing_acc;
     swing_acc.setZero();
     _wbc->swing_foot_motion_task(swing_acc, contact);
     double yaw_acc = 0, height_acc = 0;

@@ -109,7 +109,7 @@ public:
     void dynamics_consistence_task(VecInt2 contact);
     void closure_constrain_task();
     void desired_torso_motion_task(Vec2 ddr_xy);
-    void swing_foot_motion_task(Vec32 swing_acc, VecInt2 contact);
+    void swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact);
     void body_yaw_height_task(double yaw_acc, double height_acc);
     void body_roll_pitch_task(double roll_acc, double pitch_acc);
     void torque_limit_task();
