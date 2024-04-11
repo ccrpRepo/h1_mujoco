@@ -27,6 +27,7 @@ FeetEndCal::~FeetEndCal()
 Vec3 FeetEndCal::calFootPos(int legID, Vec2 vxyGoalGlobal, float dYawGoal, float phase)
 {
     _bodyVelGlobal = _est->getVelocity();
+    // _bodyVelGlobal << 1, 0, 0;
     _bodyWGlobal = _lowState->getGyroGlobal();
     Mat3 B2G_RotMat = _lowState->getRotMat();
     Mat3 G2B_RotMat = B2G_RotMat.transpose();

@@ -62,19 +62,19 @@ void State_StepWalking::run()
     
     _gait->setGait(_vCmdGlobal.segment(0, 2), _wCmdGlobal(2), _gaitHeight);
     _gait->run(_posFeetGlobalGoal, _velFeetGlobalGoal);
-    std::cout << "contact: " << (*_contact).transpose() << std::endl;
+    // std::cout << "contact: " << (*_contact).transpose() << std::endl;
     calcQQd();
     calcTau();
 
-    // if (checkStepOrNot())
-    // {
-    //     _ctrlComp->setStartWave();
-    // }
-    // else
-    // {
-    //     // _ctrlComp->setAllStance();
-    //     _ctrlComp->setStartWave();
-    // }
+    if (checkStepOrNot())
+    {
+        _ctrlComp->setStartWave();
+    }
+    else
+    {
+        // _ctrlComp->setAllStance();
+        _ctrlComp->setStartWave();
+    }
 
     Eigen::Matrix<double, 19, 1> q_des, qd_des;
     q_des.setZero();
@@ -86,21 +86,42 @@ void State_StepWalking::run()
     qd_des.block(0, 0, 5, 1) = _qdGoal.col(0);
     qd_des.block(5, 0, 5, 1) = _qdGoal.col(1);
 
-    // _lowCmd->setTau(_tau);
-    _lowCmd->setQ(q_des);
-    _lowCmd->setQd(qd_des);
-
-    for (int i(0); i < 2; ++i)
+    // std::cout << "qd_des: " << qd_des.transpose() << std::endl;
+    if (_tau.array().isNaN().any())
     {
-        if ((*_contact)(i) == 0)
-        {
-            _lowCmd->setSwingGain(i);
-        }
-        else
-        {
-            _lowCmd->setStableGain(i);
-        }
+        _tau.setZero();
+        std::cout << "_tau meets NaN" << std::endl;
     }
+    if (q_des.array().isNaN().any())
+    {
+        q_des.setZero();
+        std::cout << "q_des meets NaN" << std::endl;
+    }
+    if (qd_des.array().isNaN().any())
+    {
+        qd_des.setZero();
+        std::cout << "qd_des meets NaN" << std::endl;
+    }
+    _lowCmd->setTau(_tau);
+    // _lowCmd->setQ(q_des);
+    // _lowCmd->setQd(qd_des);
+
+    // for (int i(0); i < 2; ++i)
+    // {
+    //     if ((*_contact)(i) == 0)
+    //     {
+    //         _lowCmd->setSwingGain(i);
+            
+    //     }
+    //     else
+    //     {
+    //         _lowCmd->setStableGain(i);
+    //     }
+    // }
+    _lowCmd->setSimStanceGain(0);
+    _lowCmd->setSimStanceGain(1);
+    _lowCmd->setArmGain();
+    _lowCmd->setTorsoGain();
 }
 
 bool State_StepWalking::checkStepOrNot()
@@ -192,56 +213,124 @@ void State_StepWalking::calcQQd()
     _posFeet2BGoal_ext_l.head(3) = _posFeet2BGoal.col(0);
     _posFeet2BGoal_ext_r.head(3) = _posFeet2BGoal.col(1);
 
+    if (_posFeet2BGoal_ext_l(1) < -0.15)
+        _posFeet2BGoal_ext_l(1) = -0.15;
+    if (_posFeet2BGoal_ext_l(1) > 0.25)
+        _posFeet2BGoal_ext_l(1) = 0.25;
+    if (_posFeet2BGoal_ext_l(2) >-0.40)
+        _posFeet2BGoal_ext_l(2) = -0.40;
+    if (_posFeet2BGoal_ext_l(2) < -1)
+        _posFeet2BGoal_ext_l(2) = -1;
+
+    if (_posFeet2BGoal_ext_r(1) < -0.1)
+        _posFeet2BGoal_ext_r(1) = -0.1;
+    if (_posFeet2BGoal_ext_r(1) > 0.25)
+        _posFeet2BGoal_ext_r(1) = 0.25;
+    if (_posFeet2BGoal_ext_r(2) > -0.40)
+        _posFeet2BGoal_ext_r(2) = -0.40;
+    if (_posFeet2BGoal_ext_r(2) < -1)
+        _posFeet2BGoal_ext_r(2) = -1;
+
     Vec5 q_des_l = _dy->Cal_inverse_kinematic_Analytical(_posFeet2BGoal_ext_l, 0);
     Vec5 q_des_r = _dy->Cal_inverse_kinematic_Analytical(_posFeet2BGoal_ext_r, 1);
     _qGoal.col(0) = q_des_l;
     _qGoal.col(1) = q_des_r;
 
-    Eigen::Matrix<double, 6, 2> velFeetAnkel;
-    velFeetAnkel.setZero();
-    Mat3 Rl = _ctrlComp->_robot->T_base.block(0, 0, 3, 3) * _ctrlComp->_robot->T_foot[0].block(0, 0, 3, 3);
-    Mat3 Rr = _ctrlComp->_robot->T_base.block(0, 0, 3, 3) * _ctrlComp->_robot->T_foot[1].block(0, 0, 3, 3);
-    velFeetAnkel.col(0).tail(3) = Rl.transpose() * _velFeet2BGoal.col(0); // coordinate ankle
-    velFeetAnkel.col(1).tail(3) = Rr.transpose() * _velFeet2BGoal.col(1); // coordinate ankle
-    Mat6 X_fl, X_fr;
-    X_fl.setIdentity();
-    X_fr.setIdentity();
-    for (int i = 0; i < 5; i++)
-    {
-        X_fl = X_fl * _ctrlComp->_robot->X_dwtree[i];
-    }
-    for (int i = 5; i < 10; i++)
-    {
-        X_fr = X_fr * _ctrlComp->_robot->X_dwtree[i];
-    }
+    // Eigen::Matrix<double, 6, 2> velFeetAnkel;
+    // velFeetAnkel.setZero();
+    // Mat3 Rl = _ctrlComp->_robot->T_base.block(0, 0, 3, 3) * _ctrlComp->_robot->T_foot[0].block(0, 0, 3, 3);
+    // Mat3 Rr = _ctrlComp->_robot->T_base.block(0, 0, 3, 3) * _ctrlComp->_robot->T_foot[1].block(0, 0, 3, 3);
+    // velFeetAnkel.col(0).tail(3) = Rl.transpose() * _velFeet2BGoal.col(0); // coordinate ankle
+    // velFeetAnkel.col(1).tail(3) = Rr.transpose() * _velFeet2BGoal.col(1); // coordinate ankle
+    // Mat6 X_fl, X_fr;
+    // X_fl.setIdentity();
+    // X_fr.setIdentity();
+    // for (int i = 0; i < 5; i++)
+    // {
+    //     X_fl = X_fl * _ctrlComp->_robot->X_dwtree[i];
+    // }
+    // for (int i = 5; i < 10; i++)
+    // {
+    //     X_fr = X_fr * _ctrlComp->_robot->X_dwtree[i];
+    // }
 
-    Eigen::Matrix<double, 6, 2> xvel;
-    xvel.col(0) = X_fl * velFeetAnkel.col(0); // coordinate base
-    xvel.col(1) = X_fr * velFeetAnkel.col(1);
+    // Eigen::Matrix<double, 6, 2> xvel;
+    // xvel.col(0) = X_fl * velFeetAnkel.col(0); // coordinate base
+    // xvel.col(1) = X_fr * velFeetAnkel.col(1);
 
-    Eigen::Matrix<double, 6, 5> Jl = _ctrlComp->_robot->leg_Jacobian(_qGoal.col(0), 0);
-    Eigen::Matrix<double, 6, 5> Jr = _ctrlComp->_robot->leg_Jacobian(_qGoal.col(1), 1);
+    Eigen::Matrix<double, 3, 5> Jl = _ctrlComp->_robot->leg_Jacobian(_qGoal.col(0), 0).block(3, 0, 3, 5);
+    Eigen::Matrix<double, 3, 5> Jr = _ctrlComp->_robot->leg_Jacobian(_qGoal.col(1), 1).block(3, 0, 3, 5);
 
-    Eigen::Matrix<double, 5, 6> J_T;
-    Eigen::Matrix<double, 5, 5> J_TJ;
-    Eigen::Matrix<double, 5, 6> J_pesuinv;
+    Eigen::Matrix<double, 5, 3> J_T;
+    Eigen::Matrix<double, 3, 3> JJ_T;
+    Eigen::Matrix<double, 3, 3> JJ_T_inv;
     J_T = Jl.transpose();
-    J_TJ = J_T * Jl;
-    J_pesuinv = J_TJ.inverse() * J_T;
-
-    _qdGoal.col(0) = J_pesuinv * xvel.col(0);
+    JJ_T = Jl * J_T;
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(JJ_T);
+    // std::cout <<"rank Jl: " <<svd.rank() << std::endl;
+    // std::cout << "Jl: " << std::endl
+    //           << J_T << std::endl;
+    JJ_T_inv = JJ_T.inverse();
+    _qdGoal.col(0) = J_T * JJ_T_inv * _velFeet2BGoal.col(0);
 
     J_T = Jr.transpose();
-    J_TJ = J_T * Jr;
-    J_pesuinv = J_TJ.inverse() * J_T;
-    _qdGoal.col(1) = J_pesuinv * xvel.col(1);
+    JJ_T = Jr * J_T;
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd1(JJ_T);
+    // std::cout << "rank Jr: " << svd1.rank() << std::endl;
+    // std::cout << "Jr: " << std::endl
+            //   << J_T << std::endl;
+    JJ_T_inv = JJ_T.inverse();
+    _qdGoal.col(1) = J_T * JJ_T_inv * _velFeet2BGoal.col(1);
 
+    if(_qdGoal.array().isNaN().any())
+    {
+        std::cout << "feetl: " << _posFeet2BGoal_ext_l.transpose() << std::endl;
+        std::cout << "feetr: " << _posFeet2BGoal_ext_r.transpose() << std::endl;
+        std::cout
+            << _qGoal.transpose() << std::endl;
+        // std::cout << "Jl: " << std::endl
+        //           << Jl << std::endl;
+        // std::cout << "Jr: " << std::endl
+        //           << Jr << std::endl;
+
+        // std::cout << "nan" << std::endl;
+    }
+    // Eigen::Matrix<double, 5, 6>
+    //     J_T;
+    // Eigen::Matrix<double, 5, 5> J_TJ;
+    // Eigen::Matrix<double, 5, 6> J_pesuinv;
+    // J_T = Jl.transpose();
+    // J_TJ = J_T * Jl;
+    // J_pesuinv = J_TJ.inverse() * J_T;
+    
+    // Eigen::JacobiSVD<Eigen::MatrixXd> svd(J_TJ);
+
+    // std::cout << "Jl rank: " << svd.rank() << std::endl;
+
+    // std::cout
+    //     << "Jl_inv: " << std::endl
+    //     << J_pesuinv << std::endl;
+
+    // _qdGoal.col(0) = J_pesuinv * xvel.col(0);
+
+    // J_T = Jr.transpose();
+    // J_TJ = J_T * Jr;
+    // J_pesuinv = J_TJ.inverse() * J_T;
+    // Eigen::JacobiSVD<Eigen::MatrixXd> svd1(J_TJ);
+    // std::cout << "Jr rank: " << svd1.rank() << std::endl;
+    // std::cout << "Jr_inv: " << std::endl
+    //           << J_pesuinv << std::endl;
+
+    
+
+    // _qdGoal.col(1) = J_pesuinv * xvel.col(1);
 
 }
 
 void State_StepWalking::calcTau()
 {
     _posError = _pcd - _posBody;
+    std::cout << "_posError: " << _posError.transpose() << std::endl;
     _velError = _vCmdGlobal - _velBody;
 
     _ddPcd = _Kpp * _posError + _Kdp * _velError;
@@ -267,36 +356,38 @@ void State_StepWalking::calcTau()
 
     Vec3 dw_base = _G2B_RotMat * _dWbd;
     Vec3 ddp_base = _G2B_RotMat * _ddPcd;
-    // _wbc->dynamics_consistence_task(*_contact);
-    // _wbc->closure_constrain_task();
-    // Vec2 ddr_xy;
-    // ddr_xy << ddp_base(0) * 0.3, ddp_base(1) * 1.5;
-    // _wbc->desired_torso_motion_task(ddr_xy);
-    // Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
-    // Vec3 swingforce;
-    // for (int i = 0; i < 2; i++)
-    // {
-    //     if ((*_contact)(i) == 1)
-    //     {
-    //         swingforceFeetBase.col(i).setZero();
-    //     }
-    //     else
-    //     {
-    //         swingforce = swingforceFeetBase.col(i);
-    //     }
-    // }
+    std::cout << ddp_base.transpose() << std::endl;
+    *_contact << 1, 1;
+    _wbc->dynamics_consistence_task(*_contact);
+    _wbc->closure_constrain_task();
+    Vec2 ddr_xy;
+    ddr_xy << ddp_base(0) * 20, ddp_base(1) * 20;
+    _wbc->desired_torso_motion_task(ddr_xy);
+    Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
+    Vec3 swingforce;
+    for (int i = 0; i < 2; i++)
+    {
+        if ((*_contact)(i) == 1)
+        {
+            swingforceFeetBase.col(i).setZero();
+        }
+        else
+        {
+            swingforce = swingforceFeetBase.col(i);
+        }
+    }
 
-    // _wbc->swing_foot_motion_task(swingforce, *_contact);
-    // double yaw_acc = dw_base(2) * 1.4;     //
-    // double height_acc = ddp_base(2) * 1.0; //
-    // _wbc->body_yaw_height_task(yaw_acc, height_acc);
-    // double roll_acc = dw_base(0) * 15.0;  //
-    // double pitch_acc = dw_base(1) * 30.0; //
-    // _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
-    // _wbc->torque_limit_task();
-    // _wbc->friction_cone_task(*_contact);
-    // // long long start_time = getSystemTime();
-    // _wbc->solve_HOproblem();
+    _wbc->swing_foot_motion_task(swingforce, *_contact);
+    double yaw_acc = dw_base(2) * 20;     //
+    double height_acc = ddp_base(2) * 100; //
+    _wbc->body_yaw_height_task(yaw_acc, height_acc);
+    double roll_acc = dw_base(0) * 15.0;  //
+    double pitch_acc = dw_base(1) * 30.0; //
+    _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
+    _wbc->torque_limit_task();
+    _wbc->friction_cone_task(*_contact);
+    // long long start_time = getSystemTime();
+    _wbc->solve_HOproblem();
 
-    // _tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
+    _tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
 }
