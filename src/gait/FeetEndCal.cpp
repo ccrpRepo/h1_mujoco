@@ -9,7 +9,7 @@ FeetEndCal::FeetEndCal(CtrlComponents *ctrlComp)
 
     _kx = 0.05;
     _ky = 0.05;
-    _kyaw = 0.005;
+    _kyaw = 0.00;
 
     Vec32 feetPosBody = _robot->getFeetPosIdeal();
 
@@ -26,8 +26,10 @@ FeetEndCal::~FeetEndCal()
 
 Vec3 FeetEndCal::calFootPos(int legID, Vec2 vxyGoalGlobal, float dYawGoal, float phase)
 {
+    // vxyGoalGlobal.setZero();
     _bodyVelGlobal = _est->getVelocity();
-    // _bodyVelGlobal << 1, 0, 0;
+    // _bodyVelGlobal << 0, 0, 0;
+    // std::cout << "_bodyVelGlobal: " << _bodyVelGlobal(1) << std::endl;
     _bodyWGlobal = _lowState->getGyroGlobal();
     Mat3 B2G_RotMat = _lowState->getRotMat();
     Mat3 G2B_RotMat = B2G_RotMat.transpose();
@@ -52,12 +54,12 @@ Vec3 FeetEndCal::calFootPos(int legID, Vec2 vxyGoalGlobal, float dYawGoal, float
     _yaw = _lowState->getYaw();
     _dYaw = _lowState->getDYaw();
     _nextYaw = _dYaw * (1 - phase) * _Tswing + _dYaw * _Tstance / 2 + _kyaw * (dYawGoal - _dYaw);
-
+    
     _nextStep(0) += _feetRadius(legID) * cos(_yaw + _feetInitAngle(legID) + _nextYaw);
     _nextStep(1) += _feetRadius(legID) * sin(_yaw + _feetInitAngle(legID) + _nextYaw);
 
     _footPos = _est->getPosition() + _nextStep + offset_feet;
     _footPos(2) = 0.0;
-
+    std::cout << "endp: " << _footPos.transpose() << std::endl;
     return _footPos;
 }

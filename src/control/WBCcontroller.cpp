@@ -33,8 +33,6 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
             row_index++;
         }
     }
-    // std::cout << "K_temp: " << std::endl
-    //           << K_temp << std::endl;
     // calculate nullspace matrix of K
     Eigen::FullPivLU<MatX> lu(_K);
     _G = lu.kernel();
@@ -147,7 +145,7 @@ void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact)
     A.block(0, 6, 5, 19) = base_J_f.block(1, 0, 5, 19);
     b = foot_twist_f.tail(5) - avp_foot2base.tail(5);
 
-    _eq_task[3] = new eq_Task(A, b, true);
+    _eq_task[3] = new eq_Task(A, b, false);
 }
 
 void WBC::body_yaw_height_task(double yaw_acc, double height_acc)

@@ -54,6 +54,7 @@ void Estimator::run_inMujoco()
     {
         pelvisPos_world.setZero();
         pelvisVel_world.setZero();
+        pelvisPos_world(2) = 0.98;
     }
     else
     {
@@ -217,6 +218,7 @@ Vec3 Estimator::getVelocity()
 Vec3 Estimator::getFootPos(int i) // i = 0 : left ; i = 1 : right;
 {
     return getPosition() + _lowState->getRotMat() * _xhat.segment(6 + 3 * i, 3);
+    
 }
 
 Eigen::Matrix<double, 3, 2> Estimator::getFeetPos()
@@ -227,8 +229,6 @@ Eigen::Matrix<double, 3, 2> Estimator::getFeetPos()
     {
         feetPos.col(i) = getFootPos(i);
     }
-    // std::cout << "feetPos: " << std::endl
-    //           << feetPos << std::endl;
     return feetPos;
 }
 

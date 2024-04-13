@@ -81,7 +81,7 @@ public:
     }
     void setAllSwing()
     {
-        _waveStatus = WaveStatus::WAVE_ALL;
+        _waveStatus = WaveStatus::SWING_ALL;
     }
 
     void sendRecv()

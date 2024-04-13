@@ -28,6 +28,13 @@ void State_BalanceStand::enter()
     // _lowCmd->setZeroGain(0);
     // _lowCmd->setZeroGain(1);
 
+    _q_des << 0, 0, -0.4, 0.8, -0.4,
+        0, 0, -0.4, 0.8, -0.4,
+        0,
+        0, 0, 0, 0,
+        0, 0, 0, 0;
+    _qd_des.setZero();
+
     Vec3 init_pos(0, 0, 0.98);
     Quat init_quat;
     init_quat << 1, 0, 0, 0;
@@ -41,30 +48,11 @@ void State_BalanceStand::enter()
     _ctrlComp->_d->qpos[5] = init_quat(2);
     _ctrlComp->_d->qpos[6] = init_quat(3);
 
-    _ctrlComp->_d->qpos[7] = 0;
-    _ctrlComp->_d->qpos[8] = 0;
-    _ctrlComp->_d->qpos[9] = -0.3;
-    _ctrlComp->_d->qpos[10] = 0.8;
-    _ctrlComp->_d->qpos[11] = -0.5;
-
-    _ctrlComp->_d->qpos[12] = 0;
-    _ctrlComp->_d->qpos[13] = 0;
-    _ctrlComp->_d->qpos[14] = -0.3;
-    _ctrlComp->_d->qpos[15] = 0.8;
-    _ctrlComp->_d->qpos[16] = -0.5;
-
-    _ctrlComp->_d->qpos[17] = 0;
-
-    _ctrlComp->_d->qpos[18] = 0;
-    _ctrlComp->_d->qpos[19] = 0;
-    _ctrlComp->_d->qpos[20] = 0;
-    _ctrlComp->_d->qpos[21] = 0;
-
-    _ctrlComp->_d->qpos[22] = 0;
-    _ctrlComp->_d->qpos[23] = 0;
-    _ctrlComp->_d->qpos[24] = 0;
-    _ctrlComp->_d->qpos[25] = 0;
-
+    for (int i = 0; i < 19;i++)
+    {
+        _ctrlComp->_d->qpos[i+7] = _q_des(i);
+    }
+    
     for (int i = 0; i < 25;i++)
     {
         _ctrlComp->_d->qvel[i] = 0;
@@ -73,16 +61,13 @@ void State_BalanceStand::enter()
 
     _init_pos = init_pos;
     _init_R_base = init_R;
-    std::cout << "_init_pos: " << _init_pos.transpose() << std::endl;
-    std::cout << "_init_R: " << std::endl
-              << init_R << std::endl;
 }
 
 void State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
 
-    _wbc->set_contact_frition(0.03);
+    _wbc->set_contact_frition(0.3);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
     Mat4 T_base;
     T_base.setIdentity(4, 4);
@@ -101,11 +86,11 @@ void State_BalanceStand::run()
 
     Vec3 pos_err = _init_pos - base_pos;
     pos_err = _ctrlComp->lowState->getRotMat().transpose() * pos_err;
-
+    // std::cout << "_posError: " << pos_err.transpose() << std::endl;
     Vec2 ddr_xy;
     Vec2 des_xy = _init_pos.head(2);
     ddr_xy = 20.0 * pos_err.head(2);
-    // std::cout << "ddr_xy: " << ddr_xy.transpose() << std::endl;
+    
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec3 swing_acc;
     swing_acc.setZero();
@@ -113,6 +98,7 @@ void State_BalanceStand::run()
     double yaw_acc = 0, height_acc = 0;
     height_acc = 20 * pos_err(2); // 20 * pos_err(2)
     yaw_acc = 200 * anglar_acc(2); //
+    
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
     double roll_acc = 0, pitch_acc = 0;
     
@@ -130,17 +116,12 @@ void State_BalanceStand::run()
     Eigen::Matrix<double, 19, 1> tau;
     tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
     // tau.block(11, 0, 8, 1).setZero();
-    // std::cout << "tau: " << tau.transpose() << std::endl;
+    // std::cout << "_tau: " << tau.transpose() << std::endl;
     _lowCmd->setTau(tau);
-    Eigen::Matrix<double, 19, 1> q_des, qd_des;
-    q_des << 0, 0, -0.3, 0.8, -0.5,
-        0, 0, -0.3, 0.8, -0.5,
-        0,
-        0, 0, 0, 0,
-        0, 0, 0, 0;
-    _lowCmd->setQ(q_des);
-    qd_des.setZero();
-    _lowCmd->setQd(qd_des);
+    
+    _lowCmd->setQ(_q_des);
+    
+    _lowCmd->setQd(_qd_des);
 }
 
 void State_BalanceStand::exit()

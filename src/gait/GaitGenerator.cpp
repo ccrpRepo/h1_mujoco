@@ -34,7 +34,7 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
         _startP = _est->getFeetPos();
         _firstRun = false;
     }
-
+    
     for (int i(0); i < 2; ++i)
     {
         if ((*_contact)(i) == 1)
@@ -49,8 +49,6 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
         else
         {
             _endP.col(i) = _feetCal->calFootPos(i, _vxyGoal, _dYawGoal, (*_phase)(i));
-            // std::cout << "endp" << std::endl
-            //           << _endP << std::endl;
 
             feetPos.col(i) = getFootPos(i);
             feetVel.col(i) = getFootVel(i);

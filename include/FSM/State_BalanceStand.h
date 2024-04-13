@@ -16,6 +16,7 @@ public:
     
 
 private:
+    Eigen::Matrix<double, 19, 1> _q_des, _qd_des;
     Vec3 _init_pos;
     Mat3 _init_R_base;
     Estimator *_est;
