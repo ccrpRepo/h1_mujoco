@@ -112,7 +112,7 @@ public:
     void swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact);
     void body_yaw_height_task(double yaw_acc, double height_acc);
     void body_roll_pitch_task(double roll_acc, double pitch_acc);
-    void torque_limit_task();
+    void torque_limit_task(bool active);
     void friction_cone_task(VecInt2 contact);
 
     Vec12 inverse_dynamics(Vec18 qdd, Vec34 footforce, VecInt4 contact);

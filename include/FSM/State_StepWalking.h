@@ -63,6 +63,7 @@ private:
     Vec32 _posFeet2BGlobal;
     RotMat _B2G_RotMat, _G2B_RotMat;
     Mat52 _q;
+    Eigen::Matrix<double, 19, 1> _q_des, _qd_des;
 };
 
 #endif

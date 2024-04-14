@@ -908,7 +908,6 @@ Mat52 h1Robot::get_footEnd()
     {
         T_rf = T_rf * T_dwtree[i];
     }
-
     // 足坐标系x轴方向向量
     Vec3 lf_xaxis = T_lf.block(0, 0, 3, 1);
     Vec3 rf_xaxis = T_rf.block(0, 0, 3, 1);

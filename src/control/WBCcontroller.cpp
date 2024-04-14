@@ -174,14 +174,14 @@ void WBC::body_roll_pitch_task(double roll_acc, double pitch_acc)
     _eq_task[5] = new eq_Task(A, b, true);
 }
 
-void WBC::torque_limit_task()
+void WBC::torque_limit_task(bool active)
 {
     MatX A, b;
     A.setZero(19, 44);
     b.setZero(19, 1);
     A.block(0, 25, 19, 19) = _I_torque;
 
-    _eq_task[6] = new eq_Task(A, b, false);
+    _eq_task[6] = new eq_Task(A, b, active);
 }
 
 // contact is the contact situation of foots   1: contact; 0: swing
@@ -419,7 +419,7 @@ void WBC::solve_QProblem(MatX A, MatX b, MatX D, MatX f)
     _g0.setZero(n, 1);
     _di.setZero(n, 1);
     _min_ident.setIdentity(n, n);
-    _min_ident = _min_ident * 0.0001f;
+    _min_ident = _min_ident * 0.00000000001f;
     _G0 = A.transpose() * A + _min_ident;
     _g0 = A.transpose() * (-b);
     _CI = D;

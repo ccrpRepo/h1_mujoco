@@ -54,7 +54,6 @@ void Estimator::run_inMujoco()
     {
         pelvisPos_world.setZero();
         pelvisVel_world.setZero();
-        pelvisPos_world(2) = 0.98;
     }
     else
     {

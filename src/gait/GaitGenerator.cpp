@@ -29,6 +29,7 @@ void GaitGenerator::restart()
 
 void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
 {
+    static int timer = 0;
     if (_firstRun)
     {
         _startP = _est->getFeetPos();
@@ -43,19 +44,46 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
             {
                 _startP.col(i) = _est->getFootPos(i);
             }
+            // _startP.col(0) << 0, 0.2, 0;
+            // _startP.col(1) << 0, -0.2, 0;
             feetPos.col(i) = _startP.col(i);
             feetVel.col(i).setZero();
         }
         else
         {
             _endP.col(i) = _feetCal->calFootPos(i, _vxyGoal, _dYawGoal, (*_phase)(i));
-
+            // _endP.col(0) << 0, 0.2, 0;
+            // _endP.col(1) << 0, -0.2, 0;
             feetPos.col(i) = getFootPos(i);
             feetVel.col(i) = getFootVel(i);
         }
+        
     }
-    // std::cout << "_startP: " << _startP << std::endl;
-    // std::cout << "feetVel: " << feetVel << std::endl;
+    Mat4 T_cur;
+    T_cur.setIdentity(4, 4);
+
+    for (int i = 0; i < 5; i++)
+    {
+        T_cur = T_cur * _robot->T_dwtree[i];
+    }
+    timer++;
+    // if(timer>50)
+    // {
+    //     timer = 0;
+    //     std::cout
+    //         << "_phase: " << (*_phase)(0);
+    //     if ((*_contact)(0) == 1)
+    //         std::cout << "  left contact";
+    //     std::cout << std::endl;
+    //     std::cout << "cur_foot1: " << _est->getFootPos(0).transpose() << std::endl;
+    //     std::cout << "cur_foot2: " << T_cur.block(0,3,3,1).transpose() << std::endl;
+    //     std::cout
+    //         << "_startP: " << _startP.col(0).transpose() << std::endl;
+    //     std::cout << "desPos: " << feetPos.col(0).transpose() << std::endl;
+    //     std::cout << "_endP: " << _endP.col(0).transpose() << std::endl
+    //               << std::endl;
+    // }
+    
     _pastP = feetPos;
     _phasePast = *_phase;
 }

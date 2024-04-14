@@ -7,9 +7,9 @@ FeetEndCal::FeetEndCal(CtrlComponents *ctrlComp)
     _Tstance = ctrlComp->waveGen->getTstance();
     _Tswing = ctrlComp->waveGen->getTswing();
 
-    _kx = 0.05;
-    _ky = 0.05;
-    _kyaw = 0.00;
+    _kx = 1.2;
+    _ky = 1;
+    _kyaw = 0.1;
 
     Vec32 feetPosBody = _robot->getFeetPosIdeal();
 
@@ -58,8 +58,8 @@ Vec3 FeetEndCal::calFootPos(int legID, Vec2 vxyGoalGlobal, float dYawGoal, float
     _nextStep(0) += _feetRadius(legID) * cos(_yaw + _feetInitAngle(legID) + _nextYaw);
     _nextStep(1) += _feetRadius(legID) * sin(_yaw + _feetInitAngle(legID) + _nextYaw);
 
-    _footPos = _est->getPosition() + _nextStep + offset_feet;
+    _footPos = _est->getPosition() + _nextStep;
     _footPos(2) = 0.0;
-    std::cout << "endp: " << _footPos.transpose() << std::endl;
+    // std::cout << "endp: " << _footPos.transpose() << std::endl;
     return _footPos;
 }

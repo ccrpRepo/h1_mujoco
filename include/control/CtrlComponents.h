@@ -84,6 +84,11 @@ public:
         _waveStatus = WaveStatus::SWING_ALL;
     }
 
+    void setAllStance()
+    {
+        _waveStatus = WaveStatus::STANCE_ALL;
+    }
+
     void sendRecv()
     {
         ioInter->sendRecv(lowCmd, lowState);
