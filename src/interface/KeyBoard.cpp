@@ -65,11 +65,11 @@ void KeyBoard::changeValue()
         break;
     case 'd':
     case 'D':
-        userValue.lx = min<float>(userValue.lx - sensitivityLeft, 1.0);
+        userValue.lx = min<float>(userValue.lx + sensitivityLeft, 1.0);
         break;
     case 'a':
     case 'A':
-        userValue.lx = max<float>(userValue.lx + sensitivityLeft, -1.0);
+        userValue.lx = max<float>(userValue.lx - sensitivityLeft, -1.0);
         break;
 
     case 'i':

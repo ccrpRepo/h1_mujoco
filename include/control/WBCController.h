@@ -70,7 +70,7 @@ public:
                  0,  0,  0,  1, -_frition,
                  0,  0,  0,  0, -1;
 
-        _fri_beta << 40, 40, 0, 0, 0, 0, 0, 0, 0;
+        _fri_beta << 30, 30, 0, 0, 0, 0, 0, 0, 0;
 
         _min_ident.setIdentity(44, 44);
         _min_ident = _min_ident * 0.001;
@@ -109,10 +109,10 @@ public:
     void dynamics_consistence_task(VecInt2 contact);
     void closure_constrain_task();
     void desired_torso_motion_task(Vec2 ddr_xy);
-    void swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact);
+    void swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active);
     void body_yaw_height_task(double yaw_acc, double height_acc);
     void body_roll_pitch_task(double roll_acc, double pitch_acc);
-    void torque_limit_task(bool active);
+    void torque_limit_task(VecInt2 contact, bool active);
     void friction_cone_task(VecInt2 contact);
 
     Vec12 inverse_dynamics(Vec18 qdd, Vec34 footforce, VecInt4 contact);

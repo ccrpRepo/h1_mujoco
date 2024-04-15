@@ -97,9 +97,9 @@ void State_BalanceStand::run()
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec3 swing_acc;
     swing_acc.setZero();
-    _wbc->swing_foot_motion_task(swing_acc, contact);
+    _wbc->swing_foot_motion_task(swing_acc, contact, false);
     double yaw_acc = 0, height_acc = 0;
-    height_acc = 100 * pos_err(2); // 20 * pos_err(2)
+    height_acc = 30 * pos_err(2); // 20 * pos_err(2)
     yaw_acc = 20 * anglar_acc(2); //
     // std::cout << "height_acc: " << height_acc << std::endl;
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
@@ -107,11 +107,11 @@ void State_BalanceStand::run()
     
     roll_acc = 50 * anglar_acc(0);
     // std::cout << "roll:" << anglar_acc(0) << std::endl;
-    pitch_acc = 100 * anglar_acc(1);
+    pitch_acc = 75 * anglar_acc(1);
     // std::cout << "pitch:" << anglar_acc(1) << std::endl;
     // std::cout << "anglar_acc: " << anglar_acc.transpose() << std::endl;
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
-    _wbc->torque_limit_task(false);
+    _wbc->torque_limit_task(contact,true);
     _wbc->friction_cone_task(contact);
 
     _wbc->solve_HOproblem();
@@ -119,7 +119,7 @@ void State_BalanceStand::run()
     Eigen::Matrix<double, 19, 1> tau;
     tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
     // tau.block(11, 0, 8, 1).setZero();
-    std::cout << "_tau: " << tau.transpose() << std::endl;
+    // std::cout << "_tau: " << tau.transpose() << std::endl;
     _lowCmd->setTau(tau);
 
     _lowCmd->setQ(_q_des);

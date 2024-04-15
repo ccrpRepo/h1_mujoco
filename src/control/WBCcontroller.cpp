@@ -90,7 +90,7 @@ void WBC::desired_torso_motion_task(Vec2 ddr_xy)
 // swing_acc only contain swing foot acceleration, which means
 // the swing cols of swing_acc must set zero when using this function
 // swing foot in base coordinate
-void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact)
+void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active)
 {
     MatX A, b;
     Vec3 swing_acc_in_suc;
@@ -131,10 +131,10 @@ void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact)
     Vec3 b_X_foot = T_foot.block(0, 0, 3, 1);
     Vec3 b_Z_terrain = _dy->_robot->Flt_Transform().transpose().block(0, 2, 3, 1);
     double xita = acos(b_X_foot.dot(b_Z_terrain) / b_X_foot.norm() * b_Z_terrain.norm());
-    foot_twist_f(1) = 10 * (M_PI / 2 - xita);
+    foot_twist_f(1) = 0 * (M_PI / 2 - xita);
     /*************************************/
     /*************  求rz  ****************/
-    foot_twist_f(2) = 10 * (0 - q_leg(0 + swing_index * 5));
+    foot_twist_f(2) = 0 * (0 - q_leg(0 + swing_index * 5));
     /*************************************/
 
     Vec6 avp_foot2base = _dy->_ref_X_s[swing_index] * _dy->_avp[4 + swing_index * 5];
@@ -145,7 +145,7 @@ void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact)
     A.block(0, 6, 5, 19) = base_J_f.block(1, 0, 5, 19);
     b = foot_twist_f.tail(5) - avp_foot2base.tail(5);
 
-    _eq_task[3] = new eq_Task(A, b, false);
+    _eq_task[3] = new eq_Task(A, b, active);
 }
 
 void WBC::body_yaw_height_task(double yaw_acc, double height_acc)
@@ -174,12 +174,25 @@ void WBC::body_roll_pitch_task(double roll_acc, double pitch_acc)
     _eq_task[5] = new eq_Task(A, b, true);
 }
 
-void WBC::torque_limit_task(bool active)
+void WBC::torque_limit_task(VecInt2 contact, bool active)
 {
     MatX A, b;
-    A.setZero(19, 44);
-    b.setZero(19, 1);
-    A.block(0, 25, 19, 19) = _I_torque;
+    A.setZero(44, 44);
+    b.setZero(44, 1);
+    Eigen::Matrix<double, 5, 5> I5;
+    I5.setIdentity();
+    // if (contact(0) == 0)
+    // {
+    //     A.block(25, 25, 5, 5) = I5;
+    // }
+    // else if (contact(1) == 0)
+    // {
+    //     A.block(30, 30, 5, 5) = I5;
+    // }
+    // else
+    // {
+        A.block(25, 25, 19, 19) = _I_torque;
+    // }
 
     _eq_task[6] = new eq_Task(A, b, active);
 }

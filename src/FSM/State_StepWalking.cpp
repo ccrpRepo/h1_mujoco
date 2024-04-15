@@ -11,7 +11,7 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
     _dy = _ctrlComp->dy;
     _gait = new GaitGenerator(ctrlComp);
 
-    _gaitHeight = 0.15;
+    _gaitHeight = 0.20;
 
     _Kpp = Vec3(50, 50, 20).asDiagonal();
     _Kdp = Vec3(20, 20, 20).asDiagonal();
@@ -33,7 +33,7 @@ State_StepWalking::~State_StepWalking()
 void State_StepWalking::enter()
 {
     _pcd = _est->getPosition();
-    // _pcd(2) = -_robot->getFeetPosIdeal()(2, 0);
+    _pcd(2) = -_robot->getFeetPosIdeal()(2, 0);
     _vCmdBody.setZero();
     _yawCmd = _lowState->getYaw();
     _Rd = rotz(_yawCmd);
@@ -41,42 +41,12 @@ void State_StepWalking::enter()
     _ctrlComp->ioInter->zeroCmdPanel();
     _gait->restart();
 
-    // _q_des << 0, 0, -0.3, 2.0, -0.7,
-    //     0, 0.3, -0.3, 1.0, -0.7,
-    //     0,
-    //     0, 0, 0, 0,
-    //     0, 0, 0, 0;
-    // _qd_des.setZero();
-
-    // Vec3 init_pos(0, 0, 0.98);
-    // Quat init_quat;
-    // init_quat << 1, 0, 0, 0;
-    // Mat3 init_R = quatToRotMat(init_quat);
-
-    // _ctrlComp->_d->qpos[0] = init_pos(0);
-    // _ctrlComp->_d->qpos[1] = init_pos(1);
-    // _ctrlComp->_d->qpos[2] = init_pos(2);
-    // _ctrlComp->_d->qpos[3] = init_quat(0);
-    // _ctrlComp->_d->qpos[4] = init_quat(1);
-    // _ctrlComp->_d->qpos[5] = init_quat(2);
-    // _ctrlComp->_d->qpos[6] = init_quat(3);
-
-    // for (int i = 0; i < 19; i++)
-    // {
-    //     _ctrlComp->_d->qpos[i + 7] = _q_des(i);
-    // }
-
-    // for (int i = 0; i < 25; i++)
-    // {
-    //     _ctrlComp->_d->qvel[i] = 0;
-    //     _ctrlComp->_d->qacc[i] = 0;
-    // }
 }
 
 void State_StepWalking::run()
 {
     _ctrlComp->_robot->Update_Model();
-    _wbc->set_contact_frition(0.3);
+    _wbc->set_contact_frition(0.45);
     _posBody = _est->getPosition();
     _velBody = _est->getVelocity();
     _posFeet2BGlobal = _est->getPosFeet2BGlobal();
@@ -103,8 +73,8 @@ void State_StepWalking::run()
     }
     else
     {
-        // _ctrlComp->setAllStance();
-        _ctrlComp->setStartWave();
+        _ctrlComp->setAllStance();
+        // _ctrlComp->setStartWave();
     }
 
     _q_des.setZero();
@@ -132,38 +102,33 @@ void State_StepWalking::run()
         _qd_des.setZero();
         std::cout << "qd_des meets NaN" << std::endl;
     }
-    _tau.block(11, 0, 8, 1).setZero();
+    _tau.block(10, 0, 9, 1).setZero();
     // if((*_contact)(0) == 0)
     // {
-    //     std::cout << _tau.block(0, 0, 5, 1).transpose() << std::endl;
+    //     _tau.block(0, 0, 5, 1).setZero();
     // }
     // if ((*_contact)(1) == 0)
     // {
     //     _tau.block(5, 0, 5, 1).setZero();
     // }
-    std::cout << "_tau: " << _tau.transpose() << std::endl;
+    // std::cout << "_tau: " << _tau.transpose() << std::endl;
     // _tau.setZero();
     _lowCmd->setTau(_tau);
-    // std::cout << "qdes: " << q_des.transpose() << std::endl;
-    // q_des.setZero();
-    _lowCmd->setQ(_q_des);
-    // qd_des.setZero();
-    _lowCmd->setQd(_qd_des);
-    // std::cout << "contact: " << (*_contact).transpose() << std::endl;
+    // _lowCmd->setQ(_q_des);
+    // _lowCmd->setQd(_qd_des);
+
+    // _lowCmd->setWholeZeroGain();
     for (int i(0); i < 2; ++i)
     {
         if ((*_contact)(i) == 0)
         {
-            // _lowCmd->setSimStanceGain(i);
             _lowCmd->setSwingGain(i);
             _lowCmd->setArmGain();
             _lowCmd->setTorsoGain();
         }
         else
         {
-            // _lowCmd->setZeroGain(i);
             _lowCmd->setSimStanceGain(i);
-            // _lowCmd->setSwingGain(i);
             _lowCmd->setArmGain();
             _lowCmd->setTorsoGain();
             
@@ -271,19 +236,19 @@ void State_StepWalking::calcQQd()
 
     if (_posFeet2BGoal_ext_l(1) < -0.15)
         _posFeet2BGoal_ext_l(1) = -0.15;
-    if (_posFeet2BGoal_ext_l(1) > 0.25)
-        _posFeet2BGoal_ext_l(1) = 0.25;
-    if (_posFeet2BGoal_ext_l(2) >-0.40)
-        _posFeet2BGoal_ext_l(2) = -0.40;
+    if (_posFeet2BGoal_ext_l(1) > 0.30)
+        _posFeet2BGoal_ext_l(1) = 0.30;
+    if (_posFeet2BGoal_ext_l(2) >-0.50)
+        _posFeet2BGoal_ext_l(2) = -0.50;
     if (_posFeet2BGoal_ext_l(2) < -1)
         _posFeet2BGoal_ext_l(2) = -1;
 
-    if (_posFeet2BGoal_ext_r(1) < -0.15)
-        _posFeet2BGoal_ext_r(1) = -0.15;
-    if (_posFeet2BGoal_ext_r(1) > 0.25)
-        _posFeet2BGoal_ext_r(1) = 0.25;
-    if (_posFeet2BGoal_ext_r(2) > -0.40)
-        _posFeet2BGoal_ext_r(2) = -0.40;
+    if (_posFeet2BGoal_ext_r(1) < -0.30)
+        _posFeet2BGoal_ext_r(1) = -0.30;
+    if (_posFeet2BGoal_ext_r(1) > 0.15)
+        _posFeet2BGoal_ext_r(1) = 0.15;
+    if (_posFeet2BGoal_ext_r(2) > -0.50)
+        _posFeet2BGoal_ext_r(2) = -0.50;
     if (_posFeet2BGoal_ext_r(2) < -1)
         _posFeet2BGoal_ext_r(2) = -1;
 
@@ -301,7 +266,8 @@ void State_StepWalking::calcQQd()
     Eigen::Matrix<double, 3, 3> JJ_T_inv;
     J_T = Jl.transpose();
     JJ_T = Jl * J_T;
-   
+    // _velFeet2BGoal.col(0) << 0, 0, 1;
+    // _velFeet2BGoal.col(1) << 0, 0, 1;
     JJ_T_inv = JJ_T.inverse();
     _qdGoal.col(0) = J_T * JJ_T_inv * _velFeet2BGoal.col(0);
 
@@ -364,7 +330,7 @@ void State_StepWalking::calcTau()
 {
     _posError = _pcd - _posBody;
     _velError = _vCmdGlobal - _velBody;
-
+    // std::cout << "_posError: " << _posError.transpose() << std::endl;
     _ddPcd = _Kpp * _posError + _Kdp * _velError;
     _dWbd = _kpw * rotMatToExp(_Rd * _G2B_RotMat) + _Kdw * (_wCmdGlobal - _lowState->getGyroGlobal());
 
@@ -393,7 +359,7 @@ void State_StepWalking::calcTau()
     _wbc->dynamics_consistence_task(*_contact);
     _wbc->closure_constrain_task();
     Vec2 ddr_xy;
-    ddr_xy << ddp_base(0), ddp_base(1);
+    ddr_xy << 50 * ddp_base(0), 50 * ddp_base(1);
     // ddr_xy.setZero();
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
@@ -409,17 +375,19 @@ void State_StepWalking::calcTau()
             swingforce = swingforceFeetBase.col(i);
         }
     }
+    // std::cout <<"phase: " <<(*_phase).transpose() << std::endl;
     // std::cout << swingforce.transpose() << std::endl;
-    _wbc->swing_foot_motion_task(swingforce, *_contact);
-    double yaw_acc = dw_base(2); 
-    double height_acc = 300 *ddp_base(2);
+    // swingforce.setZero();
+    _wbc->swing_foot_motion_task(swingforce, *_contact, false);
+    double yaw_acc = 30 * dw_base(2); 
+    double height_acc = 30 *ddp_base(2);
     // std::cout << "height_acc: " << height_acc << std::endl;
     // height_acc = 100;
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
-    double roll_acc = dw_base(0);  //
-    double pitch_acc = 10 * dw_base(1); //
+    double roll_acc = 30 * dw_base(0);  //
+    double pitch_acc = 50 * dw_base(1); //
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
-    _wbc->torque_limit_task(true);
+    _wbc->torque_limit_task(*_contact, true);
     _wbc->friction_cone_task(*_contact);
     _wbc->solve_HOproblem();
 

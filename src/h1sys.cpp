@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     ctrlComp->ctrlPlatform = ctrlPlat;
     ctrlComp->dt = 0.001; // run at 1000hz
     ctrlComp->running = &running;
-    ctrlComp->waveGen = new WaveGenerator(0.5, 0.5, Vec2(0, 0.5)); // Trot 0.45
+    ctrlComp->waveGen = new WaveGenerator(0.6, 0.5, Vec2(0, 0.5)); // Trot 0.45
     ctrlComp->geneObj();
     ControlFrame ctrlFrame(ctrlComp);
     while (running)
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
 
         // update scene and render  更新场景并渲染
         opt.frame = mjFRAME_WORLD; // 显示轴线
-        // cam.lookat[0] = d->qpos[3]; // 视角跟随物体的x轴
+        cam.lookat[0] = d->qpos[0]; // 视角跟随物体的x轴
         mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
         mjr_render(viewport, &scn, &con);
         // printf("{%f, %f, %f, %f, %f, %f};\n", cam.azimuth, cam.elevation, cam.distance, cam.lookat[0], cam.lookat[1], cam.lookat[2]);

@@ -220,19 +220,19 @@ struct LowlevelCmd
     {
         motorCmd[legID * 5 + 0].mode = 10;
         motorCmd[legID * 5 + 0].Kp = 50; //50
-        motorCmd[legID * 5 + 0].Kd = 10;
+        motorCmd[legID * 5 + 0].Kd = 0; //10
         motorCmd[legID * 5 + 1].mode = 10;
         motorCmd[legID * 5 + 1].Kp = 120; //120
-        motorCmd[legID * 5 + 1].Kd = 10;
+        motorCmd[legID * 5 + 1].Kd = 0; //10
         motorCmd[legID * 5 + 2].mode = 10;
-        motorCmd[legID * 5 + 2].Kp = 120; //80
-        motorCmd[legID * 5 + 2].Kd = 8;
+        motorCmd[legID * 5 + 2].Kp = 80; //80
+        motorCmd[legID * 5 + 2].Kd = 0; //8
         motorCmd[legID * 5 + 3].mode = 10;
-        motorCmd[legID * 5 + 3].Kp = 120; //80
-        motorCmd[legID * 5 + 3].Kd = 8;
+        motorCmd[legID * 5 + 3].Kp = 80; //80
+        motorCmd[legID * 5 + 3].Kd = 0; //8
         motorCmd[legID * 5 + 4].mode = 10;
-        motorCmd[legID * 5 + 4].Kp = 10; //10
-        motorCmd[legID * 5 + 4].Kd = 3;
+        motorCmd[legID * 5 + 4].Kp = 20; //10
+        motorCmd[legID * 5 + 4].Kd = 0; //3
     }
 };
 
