@@ -8,11 +8,11 @@ set(BIN_NAME ${PROJECT_NAME})
 
 set(CMAKE_BUILD_TYPE "Release")
 
-# find_package(Eigen3 REQUIRED)
-# find_package(pinocchio REQUIRED)
-# include_directories(${Pinocchio_INCLUDE_DIRS})
-# link_directories(${Pinocchio_LIBRARY_DIRS})
-# target_link_libraries(pinocchio::pinocchio)
+find_package(Eigen3 REQUIRED)
+find_package(pinocchio REQUIRED)
+include_directories(${Pinocchio_INCLUDE_DIRS})
+link_directories(${Pinocchio_LIBRARY_DIRS})
+target_link_libraries(pinocchio::pinocchio)
 
 #Mujoco paths
 set(MJPRO_PATH /home/crp/.mujoco/mujoco210)

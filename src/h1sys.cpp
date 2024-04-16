@@ -4,8 +4,8 @@
 #include <sched.h>
 #include <iomanip>
 
-// #include <pinocchio/fwd.hpp> 
-// #include <pinocchio/algorithm/rnea.hpp>
+#include <pinocchio/fwd.hpp> 
+#include <pinocchio/algorithm/rnea.hpp>
 
 #include "rpdynamics/dynamics.h"
 #include "interface/IOmujoco.h"
