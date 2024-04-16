@@ -9,6 +9,7 @@
 #include "gait/WaveGenerator.h"
 #include "control/Estimator.h"
 #include "control/WBCController.h"
+// #include "pinody/pinody.h"
 
 #include <string>
 #include <iostream>
@@ -29,6 +30,8 @@ public:
         phase = new Vec2;
         *contact = VecInt2(0, 0);
         *phase = Vec2(0.5, 0.5);
+
+        // _pinody = pinody;
     }
     ~CtrlComponents()
     {
@@ -66,6 +69,8 @@ public:
     double dt;
     bool *running;
     CtrlPlatform ctrlPlatform;
+
+    // Pinody *_pinody;
 
     void geneObj()
     {

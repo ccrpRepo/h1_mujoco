@@ -4,14 +4,15 @@
 #include <sched.h>
 #include <iomanip>
 
-#include <pinocchio/fwd.hpp> 
-#include <pinocchio/algorithm/rnea.hpp>
+#include "pinocchio/fwd.hpp" 
+#include "pinocchio/parsers/urdf.hpp"
 
 #include "rpdynamics/dynamics.h"
 #include "interface/IOmujoco.h"
 #include "control/CtrlComponents.h"
 #include "gait/WaveGenerator.h"
 #include "control/ControlFrame.h"
+#include "pinody/pinody.h"
 
 using namespace std;
 
@@ -133,7 +134,7 @@ int main(int argc, char **argv)
     _robot_name = "humanoid_H1";
     std::cout << "robot_name: " << _robot_name << std::endl;
 
-    char filename[] = "/home/crp/git/h1_sys/robot/scene.xml";
+    char filename[] = "/home/crp/ccrpRepo/h1_mujoco/robot/scene.xml";
     char error[1000] = "Could not load binary model";
     lastx = 0;
     lasty = 0;
@@ -146,6 +147,17 @@ int main(int argc, char **argv)
         mju_error_s("Load model error: %s", error);
     }
     d = mj_makeData(m);
+
+    char h1urdf[] = "/home/crp/ccrpRepo/h1_mujoco/robot/urdf/h1.urdf";
+    pinocchio::Model  *model;
+    pinocchio::Data *data;
+    model = new pinocchio::Model();
+    pinocchio::JointModelFreeFlyer root_joint;
+    pinocchio::urdf::buildModel(h1urdf,root_joint,*model);
+    data = new pinocchio::Data(*model);
+
+    Pinody *pinody = new Pinody(model,data);
+
 
     Init_window();
     ioInter = new IOmujoco(d,m);
