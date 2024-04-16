@@ -7,12 +7,13 @@ set(USE_GL 1)
 set(BIN_NAME ${PROJECT_NAME})
 
 set(CMAKE_BUILD_TYPE "Release")
-
+find_package(Boost)
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 include_directories(${Pinocchio_INCLUDE_DIRS})
 link_directories(${Pinocchio_LIBRARY_DIRS})
-target_link_libraries(pinocchio::pinocchio)
+
+
 
 #Mujoco paths
 set(MJPRO_PATH /home/crp/.mujoco/mujoco210)
@@ -48,7 +49,8 @@ add_executable(${BIN_NAME}
 src/h1sys.cpp
 ${SRC_LIST}
 )
-
+link_libraries(/usr/local/lib/libpinocchio.so)
+target_link_libraries(${BIN_NAME} pinocchio::pinocchio)
 # target_link_libraries(h1test ${LIB_MUJOCO} pthread)
 
 target_link_libraries(${BIN_NAME} ${LIB_MUJOCO} pthread)

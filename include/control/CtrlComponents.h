@@ -1,6 +1,8 @@
 #ifndef CTRLCOMPONENTS_H
 #define CTRLCOMPONENTS_H
 
+#include <pinocchio/fwd.hpp>
+// #include "pinody/pinody.h"
 #include "message/LowlevelCmd.h"
 #include "message/LowlevelState.h"
 #include "interface/IOinterface.h"
@@ -9,7 +11,7 @@
 #include "gait/WaveGenerator.h"
 #include "control/Estimator.h"
 #include "control/WBCController.h"
-// #include "pinody/pinody.h"
+
 
 #include <string>
 #include <iostream>
@@ -70,6 +72,8 @@ public:
     bool *running;
     CtrlPlatform ctrlPlatform;
 
+    // pinocchio::Model *_model;
+    // pinocchio::Data *_data;
     // Pinody *_pinody;
 
     void geneObj()

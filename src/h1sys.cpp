@@ -1,18 +1,26 @@
+#include <pinocchio/fwd.hpp>
+#include "pinocchio/parsers/urdf.hpp" 
+#include "pinocchio/algorithm/joint-configuration.hpp"
+#include "pinocchio/algorithm/kinematics.hpp"
+#include "pinocchio/algorithm/jacobian.hpp"
+#include "pinocchio/algorithm/frames.hpp"
+#include "pinocchio/algorithm/rnea.hpp"
+#include <pinocchio/algorithm/crba.hpp>
 #include <iostream>
 #include <unistd.h>
 #include <csignal>
 #include <sched.h>
-#include <iomanip>
+// #include <iomanip>
 
-#include "pinocchio/fwd.hpp" 
-#include "pinocchio/parsers/urdf.hpp"
 
+#include "pinody/pinody.h"
 #include "rpdynamics/dynamics.h"
 #include "interface/IOmujoco.h"
+#include "control/ControlFrame.h"
 #include "control/CtrlComponents.h"
 #include "gait/WaveGenerator.h"
-#include "control/ControlFrame.h"
-#include "pinody/pinody.h"
+
+
 
 using namespace std;
 
@@ -148,7 +156,7 @@ int main(int argc, char **argv)
     }
     d = mj_makeData(m);
 
-    char h1urdf[] = "/home/crp/ccrpRepo/h1_mujoco/robot/urdf/h1.urdf";
+    const std::string h1urdf = "/home/crp/ccrpRepo/h1_mujoco/robot/urdf/h1.urdf";
     pinocchio::Model  *model;
     pinocchio::Data *data;
     model = new pinocchio::Model();
@@ -156,8 +164,7 @@ int main(int argc, char **argv)
     pinocchio::urdf::buildModel(h1urdf,root_joint,*model);
     data = new pinocchio::Data(*model);
 
-    Pinody *pinody = new Pinody(model,data);
-
+    
 
     Init_window();
     ioInter = new IOmujoco(d,m);
