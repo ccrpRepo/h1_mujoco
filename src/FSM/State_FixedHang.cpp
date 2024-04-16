@@ -125,6 +125,7 @@ FSMStateName State_FixedHang::checkChange()
 {
     if (_lowState->userCmd == UserCommand::START)
     {
+        // return FSMStateName::STEPWALKING;
         return FSMStateName::STEPTEST;
         // return FSMStateName::SWINGTEST;
     }

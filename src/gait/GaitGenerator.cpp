@@ -40,20 +40,20 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
     {
         if ((*_contact)(i) == 1)
         {
-            if ((*_phase)(i) < 0.1)
+            if ((*_phase)(i) < 0.01)
             {
                 _startP.col(i) = _est->getFootPos(i);
             }
-            // _startP.col(0) << 0, 0.2, 0;
-            // _startP.col(1) << 0, -0.2, 0;
+            _startP.col(0) << 0, 0.2, 0;
+            _startP.col(1) << 0, -0.2, 0;
             feetPos.col(i) = _startP.col(i);
             feetVel.col(i).setZero();
         }
         else
         {
             _endP.col(i) = _feetCal->calFootPos(i, _vxyGoal, _dYawGoal, (*_phase)(i));
-            // _endP.col(0) << 0, 0.2, 0;
-            // _endP.col(1) << 0, -0.2, 0;
+            _endP.col(0) << 0, 0.2, 0;
+            _endP.col(1) << 0, -0.2, 0;
             feetPos.col(i) = getFootPos(i);
             feetVel.col(i) = getFootVel(i);
         }

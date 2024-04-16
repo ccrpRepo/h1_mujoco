@@ -89,6 +89,7 @@ public:
     eq_Task *_eq_task[7];
     ineq_Task *_ineq_task;
     MatX _H, _H_fl, _C, _K, _k, _S, _G, _I_xy, _J_swingfoot, _I_yaw_height, _I_roll_pitch, _I_torque;
+    MatX _g;
     double _frition;
     Eigen::Matrix<double, 9, 5> _Ffri;
     Eigen::Matrix<double, 9, 1> _fri_beta;

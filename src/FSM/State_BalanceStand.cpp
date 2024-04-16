@@ -8,6 +8,7 @@ State_BalanceStand::State_BalanceStand(CtrlComponents *ctrlComp)
       _phase(ctrlComp->phase) 
     {
         _wbc = _ctrlComp->_wbc;
+        _dy = _ctrlComp->dy;
     }
 
 void State_BalanceStand::enter()
@@ -23,11 +24,9 @@ void State_BalanceStand::enter()
     _lowCmd->setSimStanceGain(1);
     _lowCmd->setArmGain();
     _lowCmd->setTorsoGain();
-    // _lowCmd->motorCmd[1].Kp = 1000;
-    // _lowCmd->motorCmd[6].Kp = 1000;
     // _lowCmd->setZeroGain(0);
     // _lowCmd->setZeroGain(1);
-    // _lowCmd->setWholeZeroGain();
+    _lowCmd->setWholeZeroGain();
     // _lowCmd->setWholeSmallGain();
 
     _q_des << 0, 0, -0.3, 1.0, -0.7,
@@ -69,7 +68,7 @@ void State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
 
-    _wbc->set_contact_frition(0.35);
+    _wbc->set_contact_frition(0.05);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
     Mat4 T_base;
     T_base.setIdentity(4, 4);
@@ -79,6 +78,7 @@ void State_BalanceStand::run()
     Vec3 anglar_acc;
     anglar_acc << -T_tan(1, 2), T_tan(0, 2), -T_tan(0, 1);
     anglar_acc = _ctrlComp->lowState->getRotMat().transpose() * anglar_acc;
+    // anglar_acc.setZero();
     // std::cout << "ang: " << anglar_acc.transpose() << std::endl;
     Vec3 base_pos = _ctrlComp->estimator->getPosition();
     VecInt2 contact;
@@ -92,34 +92,36 @@ void State_BalanceStand::run()
     // std::cout << "_posError: " << pos_err.transpose() << std::endl;
     Vec2 ddr_xy;
     Vec2 des_xy = _init_pos.head(2);
-    ddr_xy = 50.0 * pos_err.head(2);
-    
+    ddr_xy = 150 * pos_err.head(2);
+    // ddr_xy << 0, 0;
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec3 swing_acc;
-    swing_acc.setZero();
+    // swing_acc << 0, 0, 10;
+    // swing_acc.setZero();
     _wbc->swing_foot_motion_task(swing_acc, contact, false);
     double yaw_acc = 0, height_acc = 0;
-    height_acc = 30 * pos_err(2); // 20 * pos_err(2)
-    yaw_acc = 20 * anglar_acc(2); //
+    height_acc = 150 * pos_err(2); // 20 * pos_err(2)
+    yaw_acc = 50 * anglar_acc(2); //
     // std::cout << "height_acc: " << height_acc << std::endl;
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
     double roll_acc = 0, pitch_acc = 0;
-    
-    roll_acc = 50 * anglar_acc(0);
+    roll_acc = 100 * anglar_acc(0);
     // std::cout << "roll:" << anglar_acc(0) << std::endl;
-    pitch_acc = 75 * anglar_acc(1);
+    pitch_acc =  120 * anglar_acc(1);
     // std::cout << "pitch:" << anglar_acc(1) << std::endl;
     // std::cout << "anglar_acc: " << anglar_acc.transpose() << std::endl;
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
-    _wbc->torque_limit_task(contact,true);
+    _wbc->torque_limit_task(contact, false);
     _wbc->friction_cone_task(contact);
 
     _wbc->solve_HOproblem();
 
     Eigen::Matrix<double, 19, 1> tau;
     tau = _wbc->_qdd_torque.block(25, 0, 19, 1);
-    // tau.block(11, 0, 8, 1).setZero();
-    // std::cout << "_tau: " << tau.transpose() << std::endl;
+    // // tau.block(11, 0, 8, 1).setZero();
+    // // std::cout << "_tau: " << tau.transpose() << std::endl;
+    // tau = _dy->Cal_Generalize_Bias_force_Flt(true).block(6, 0, 19, 1);
+    std::cout << tau.transpose() << std::endl;
     _lowCmd->setTau(tau);
 
     _lowCmd->setQ(_q_des);
@@ -127,11 +129,12 @@ void State_BalanceStand::run()
     _lowCmd->setQd(_qd_des);
     // _ctrlComp->_d->qpos[0] = 0;
     // _ctrlComp->_d->qpos[1] = 0;
+    // _ctrlComp->_d->qpos[2] = 0.98;
     // _ctrlComp->_d->qpos[3] = 1;
     // _ctrlComp->_d->qpos[4] = 0;
     // _ctrlComp->_d->qpos[5] = 0;
     // _ctrlComp->_d->qpos[6] = 0;
-    // _ctrlComp->_d->qfrc_applied[3] = 20;
+    // // _ctrlComp->_d->qfrc_applied[0] = -10;
 }
 
 void State_BalanceStand::exit()

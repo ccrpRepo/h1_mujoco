@@ -38,7 +38,7 @@ void State_StepTest::run()
     _velBody = _est->getVelocity();
     _B2G_RotMat = _lowState->getRotMat();
     _G2B_RotMat = _B2G_RotMat.transpose();
-    // Vec2 dot;
+    // Vec2 dot; 
     // dot(0) = (*_phase)(0) * (1-(*_contact)(0));
     // dot(1) = (*_phase)(1) * (1-(*_contact)(1));
     // std::cout << "dot:" << dot.transpose() << std::endl;
