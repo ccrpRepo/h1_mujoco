@@ -58,7 +58,7 @@ using Mat3 = typename Eigen::Matrix<double, 3, 3>;
 using Mat4 = typename Eigen::Matrix<double, 4, 4>;
 
 // 3x3 Identity Matrix
-#define I3 Eigen::MatrixXd::Identity(3, 3)
+// #define I3 Eigen::MatrixXd::Identity(3, 3)
 
 // 3x4 Matrix, each column is a 3x1 vector
 using Vec34 = typename Eigen::Matrix<double, 3, 4>;

@@ -1,8 +1,7 @@
 #ifndef CTRLCOMPONENTS_H
 #define CTRLCOMPONENTS_H
 
-#include <pinocchio/fwd.hpp>
-// #include "pinody/pinody.h"
+#include "pinody/pinody.h"
 #include "message/LowlevelCmd.h"
 #include "message/LowlevelState.h"
 #include "interface/IOinterface.h"
@@ -19,13 +18,14 @@
 struct CtrlComponents
 {
 public:
-    CtrlComponents(IOinterface *ioInter, Dynamics *dy_, mjData* d, mjModel* m) : ioInter(ioInter),dy(dy_)
+    CtrlComponents(IOinterface *ioInter, Dynamics *dy_, mjData* d, mjModel* m, Pinody *pinody) : ioInter(ioInter),dy(dy_)
     {
         // waveGen = new WaveGenerator(0.5, 0.5, Vec4(0, 0.5, 0.5, 0)); // Trot 0.45
         _d = d;
         _m = m;
         _robot = dy->_robot;
-        _wbc = new WBC(dy_);
+        _pinody = pinody;
+        _wbc = new WBC(dy_,_pinody);
         lowCmd = new LowlevelCmd();
         lowState = new LowlevelState();
         contact = new VecInt2;
@@ -33,7 +33,7 @@ public:
         *contact = VecInt2(0, 0);
         *phase = Vec2(0.5, 0.5);
 
-        // _pinody = pinody;
+        
     }
     ~CtrlComponents()
     {
@@ -72,9 +72,7 @@ public:
     bool *running;
     CtrlPlatform ctrlPlatform;
 
-    // pinocchio::Model *_model;
-    // pinocchio::Data *_data;
-    // Pinody *_pinody;
+    Pinody *_pinody;
 
     void geneObj()
     {

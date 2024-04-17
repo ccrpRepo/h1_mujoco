@@ -45,18 +45,21 @@
 
   <worldbody>
     <body name="pelvis" pos="0 0 1.5" childclass="h1">
-      <inertial pos="-0.0002 4e-05 -0.04522"  mass="5.39" fullinertia='0.044582 0.0082464 0.049021 8.7034E-05 -1.9893E-05 4.021E-06' />
-      <freejoint/>
+      <inertial pos="-0.0002 4e-05 -0.04522"  mass="5.39" 
+      fullinertia='0.044582 0.0082464 0.049021 8.7034E-05 -1.9893E-05 4.021E-06' />
+      <!-- <freejoint/> -->
       <site name="imu" size="0.01" pos="-0.04452 -0.01891 0.27756"/>
       <geom class="visual" mesh="pelvis"/>
       <geom class="collision" mesh="pelvis"/>
       <body name="left_hip_yaw_link" pos="0 0.0875 -0.1742">
-        <inertial pos="-0.04923 0.0001 0.0072"  mass="2.244" fullinertia='0.0025731 0.0030444 0.0022883 9.159E-06 -0.00051948 1.949E-06' />
+        <inertial pos="-0.04923 0.0001 0.0072"  mass="2.244" 
+        fullinertia='0.0025731 0.0030444 0.0022883 9.159E-06 -0.00051948 1.949E-06' />
         <joint name="left_hip_yaw_joint" axis="0 0 1" range="-0.43 0.43"/>
         <geom class="visual" mesh="left_hip_yaw_link"/>
         <geom size="0.06 0.035" pos="-0.067 0 0" quat="0.707123 0 0.70709 0" type="cylinder" class="collision"/>
         <body name="left_hip_roll_link" pos="0.039468 0 0">
-          <inertial pos="-0.0058 -0.00319 -9e-05" mass="2.232" fullinertia='0.0020603 0.0022482 0.0024323 3.2115E-05 2.878E-06 -7.813E-06'/>
+          <inertial pos="-0.0058 -0.00319 -9e-05" mass="2.232" 
+          fullinertia='0.0020603 0.0022482 0.0024323 3.2115E-05 2.878E-06 -7.813E-06'/>
           <joint name="left_hip_roll_joint" axis="1 0 0" range="-0.43 0.43"/>
           <geom class="visual" mesh="left_hip_roll_link"/>
           <geom class="collision" mesh="left_hip_roll_link"/>

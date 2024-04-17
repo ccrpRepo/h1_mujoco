@@ -474,7 +474,7 @@ void a1Robot::build_a1()
     xyz_lp << 0, 0, -0.2;
     for (int i = 0; i < _NL; i++)
     {
-        _lpjoint[i]._pre = WORLD;
+        _lpjoint[i]._pre = Coor_WORLD;
         _lpjoint[i].T.setZero(6, 3);
         _lpjoint[i].T << 0, 0, 0,
                             0, 0, 0,
@@ -689,7 +689,7 @@ void h1Robot::build_h1()
 
     for (int i = 0; i < _NL; i++)
     {
-        _lpjoint[i]._pre = WORLD;
+        _lpjoint[i]._pre = Coor_WORLD;
         _lpjoint[i].T.setZero(6, 5);
         _lpjoint[i].T << 0, 0, 0, 0, 0,
                          1, 0, 0, 0, 0,

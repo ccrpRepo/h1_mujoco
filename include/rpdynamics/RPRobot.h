@@ -7,7 +7,7 @@
 #include "TimeCounter.h"
 #include "urdfData.h"
 
-#define WORLD -2
+#define Coor_WORLD -2
 
 class LoopJoint : public Joint
 {

@@ -4,6 +4,18 @@
 #include "rpdynamics/dynamics.h"
 #include "rpdynamics/MathType.h"
 #include "thirdParty/quadProgpp/QuadProg++.hh"
+#include "pinody/pinody.h"
+// #include "FSM/State_DynamicTest.h"
+#include "pinocchio/parsers/urdf.hpp"
+#include "pinocchio/algorithm/joint-configuration.hpp"
+#include "pinocchio/algorithm/kinematics.hpp"
+#include "pinocchio/algorithm/jacobian.hpp"
+#include "pinocchio/algorithm/frames.hpp"
+#include "pinocchio/algorithm/rnea.hpp"
+#include <pinocchio/algorithm/crba.hpp>
+#include "pinocchio/algorithm/kinematics.hpp"
+#include "pinocchio/algorithm/jacobian.hpp"
+#include "pinocchio/algorithm/check.hpp"
 
 class eq_Task
 {
@@ -44,7 +56,7 @@ private:
 class WBC
 {
 public:
-    WBC(Dynamics *dy) : _dy(dy)
+    WBC(Dynamics *dy, Pinody *pinody) : _dy(dy)
     {
         _I_xy.setZero(2, 25);
         _I_xy << 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -74,6 +86,7 @@ public:
 
         _min_ident.setIdentity(44, 44);
         _min_ident = _min_ident * 0.001;
+        _pinody = pinody;
     }
     ~WBC()
     {
@@ -106,6 +119,10 @@ public:
 
     quadprogpp::Matrix<double> G, CE, CI;
     quadprogpp::Vector<double> g0, ce0, ci0, x;
+
+    Pinody *_pinody;
+    Eigen::Matrix<double, 6, 25> _J[2];
+    Eigen::Matrix<double, 6, 25> _dJ[2];
 
     void dynamics_consistence_task(VecInt2 contact);
     void closure_constrain_task();

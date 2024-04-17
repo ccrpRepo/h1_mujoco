@@ -4,56 +4,127 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
 {
     int contact_num = 0;
     int row_index = 0;
-    MatX K_temp, k_temp;
-    // calculate general inertial matrix
-    _H = _dy->Cal_Generalize_Inertial_Matrix_CRBA_Flt(_H_fl);
-    // std::cout << "_H: " << std::endl
-    //           << _H << std::endl;
-    // calculate general bias force
-    _C = _dy->Cal_Generalize_Bias_force_Flt(true);
-    // std::cout << "_C: " << std::endl
-    //           << _C.transpose() << std::endl;
-    // calculate constrain matrix K and k
-    K_temp = _dy->Cal_K_Flt(k_temp);
-    // std::cout << "K_temp: " << std::endl
-    //           << K_temp << std::endl;
-    // _g = _dy->Cal_Gravity_Term();
+    MatX Js;
+    // MatX K_temp, k_temp;
     for (int i = 0; i < 2; i++)
     {
         if (contact(i) == 1)
             contact_num++;
     }
-    _K.setZero(contact_num * 5, 25);
-    _k.setZero(contact_num * 5, 1);
-    for (int i = 0; i < 2; i++)
+    Js.setZero(contact_num * 6, 25);
+    Eigen::VectorXd q(_pinody->_model->nq);
+    Eigen::VectorXd qd(_pinody->_model->nv);
+    q(0) = _dy->_quat_xyz[4]; // x
+    q(1) = _dy->_quat_xyz[5]; // y
+    q(2) = _dy->_quat_xyz[6]; // z
+    q(3) = _dy->_quat_xyz[1]; // qua_x
+    q(4) = _dy->_quat_xyz[2]; // qua_y
+    q(5) = _dy->_quat_xyz[3]; // qua_z
+    q(6) = _dy->_quat_xyz[0]; // qua_w
+
+    qd(0) = _dy->_robot->_v_base[3]; //vx
+    qd(1) = _dy->_robot->_v_base[4]; // vy
+    qd(2) = _dy->_robot->_v_base[5]; // vz
+    qd(3) = _dy->_robot->_v_base[0]; // wx
+    qd(4) = _dy->_robot->_v_base[1]; // wy
+    qd(5) = _dy->_robot->_v_base[2]; // wz
+
+    for (int i = 0; i < 19; i++)
     {
-        if (contact(i) == 1)
-        {
-            _K.block(5 * row_index, 0, 5, 25) = K_temp.block(5 * i, 0, 5, 25);
-            _k.block(5 * row_index, 0, 5, 1) = k_temp.block(5 * i, 0, 5, 1);
-            row_index++;
-        }
+        q(i + 7) = _dy->_q[i];
+        qd(i + 6) = _dy->_dq[i];
     }
+
+    pinocchio::Model *model;
+    pinocchio::Data *data;
+    model = _pinody->_model;
+    data = _pinody->_data;
+    int joint_index[19] = {0};
+    joint_index[0] = model->getFrameId("left_hip_yaw_joint");
+    joint_index[1] = model->getFrameId("left_hip_roll_joint");
+    joint_index[2] = model->getFrameId("left_hip_pitch_joint");
+    joint_index[3] = model->getFrameId("left_knee_joint");
+    joint_index[4] = model->getFrameId("left_ankle_joint");
+    joint_index[5] = model->getFrameId("right_hip_yaw_joint");
+    joint_index[6] = model->getFrameId("right_hip_roll_joint");
+    joint_index[7] = model->getFrameId("right_hip_pitch_joint");
+    joint_index[8] = model->getFrameId("right_knee_joint");
+    joint_index[9] = model->getFrameId("right_ankle_joint");
+    joint_index[10] = model->getFrameId("torso_link");
+    joint_index[11] = model->getFrameId("left_shoulder_pitch_joint");
+    joint_index[12] = model->getFrameId("left_shoulder_roll_joint");
+    joint_index[13] = model->getFrameId("left_shoulder_yaw_joint");
+    joint_index[14] = model->getFrameId("left_elbow_joint");
+    joint_index[15] = model->getFrameId("right_shoulder_pitch_joint");
+    joint_index[16] = model->getFrameId("right_shoulder_roll_joint");
+    joint_index[17] = model->getFrameId("right_shoulder_yaw_joint");
+    joint_index[18] = model->getFrameId("right_elbow_joint");
+
+    pinocchio::forwardKinematics(*(model), *(data), q, qd);
+    pinocchio::framesForwardKinematics(*model, *data, q);
+    pinocchio::computeJointJacobians(*(model), *(data));
+    pinocchio::updateFramePlacements(*model, *data);
+    pinocchio::nonLinearEffects(*(model), *(data), q, qd);
+    pinocchio::computeJointJacobiansTimeVariation(*model, *data, q, qd);
+
+    _H = data->M;
+    _C = data->nle;
+
+    _J->setZero();
+    _dJ->setZero();
+
+    pinocchio::getFrameJacobian(*model, *data, joint_index[4], pinocchio::LOCAL_WORLD_ALIGNED, _J[0]);
+    pinocchio::getFrameJacobian(*model, *data, joint_index[9], pinocchio::LOCAL_WORLD_ALIGNED, _J[1]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[4], pinocchio::LOCAL_WORLD_ALIGNED, _dJ[0]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[9], pinocchio::LOCAL_WORLD_ALIGNED, _dJ[1]);
+
+    for (int i = 0; i < contact_num;i++)
+    {
+        if (contact(0))
+            Js.block(0 + contact_num * 6, 0, 6, 25) = _J[0];
+        if (contact(1))
+            Js.block(0 + contact_num * 6, 0, 6, 25) = _J[1];
+    }
+
+    // calculate general inertial matrix
+    // _H = _dy->Cal_Generalize_Inertial_Matrix_CRBA_Flt(_H_fl);
+    
+    // calculate general bias force
+    // _C = _dy->Cal_Generalize_Bias_force_Flt(true);
+    // calculate constrain matrix K and k
+    // K_temp = _dy->Cal_K_Flt(k_temp);
+    // _g = _dy->Cal_Gravity_Term();
+    
+    // _K.setZero(contact_num * 5, 25);
+    // _k.setZero(contact_num * 5, 1);
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     if (contact(i) == 1)
+    //     {
+    //         _K.block(5 * row_index, 0, 5, 25) = K_temp.block(5 * i, 0, 5, 25);
+    //         _k.block(5 * row_index, 0, 5, 1) = k_temp.block(5 * i, 0, 5, 1);
+    //         row_index++;
+    //     }
+    // }
     // calculate nullspace matrix of K
-    Eigen::FullPivLU<MatX> lu(_K);
-    _G = lu.kernel();
+    // Eigen::FullPivLU<MatX> lu(_K);
+    // _G = lu.kernel();
 
-    // dynamics constrain A and b
-    MatX A, b;
-    int cols, rows;
-    rows = _G.rows(); // G : rows x cols   G^T : cols x rows
-    cols = _G.cols();
-    // std::cout << "size: " << rows << ", " << cols << std::endl;
-    A.setZero(cols, 44);
-    b.setZero(cols, 1);
-    _S.setZero(19, 25);
-    _S.block(0, 6, 19, 19).setIdentity(19, 19);
-    A.block(0, 0, cols, 25) = _G.transpose() * _H;
-    A.block(0, 25, cols, 19) = -_G.transpose() * _S.transpose();
+    // // dynamics constrain A and b
+    // MatX A, b;
+    // int cols, rows;
+    // rows = _G.rows(); // G : rows x cols   G^T : cols x rows
+    // cols = _G.cols();
+    // A.setZero(cols, 44);
+    // b.setZero(cols, 1);
+    // _S.setZero(19, 25);
+    // _S.block(0, 6, 19, 19).setIdentity(19, 19);
+    // A.block(0, 0, cols, 25) = _G.transpose() * _H;
+    // A.block(0, 25, cols, 19) = -_G.transpose() * _S.transpose();
 
-    b = -_G.transpose() * _C;
+    // b = -_G.transpose() * _C;
 
-    _eq_task[0] = new eq_Task(A, b, true);
+    // _eq_task[0] = new eq_Task(A, b, true);
 
     // std::cout << "A: " << std::endl << A << std::endl;
     // std::cout << "b: " << b.transpose() << std::endl;

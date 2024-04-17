@@ -1,11 +1,5 @@
 #include <pinocchio/fwd.hpp>
 #include "pinocchio/parsers/urdf.hpp" 
-#include "pinocchio/algorithm/joint-configuration.hpp"
-#include "pinocchio/algorithm/kinematics.hpp"
-#include "pinocchio/algorithm/jacobian.hpp"
-#include "pinocchio/algorithm/frames.hpp"
-#include "pinocchio/algorithm/rnea.hpp"
-#include <pinocchio/algorithm/crba.hpp>
 #include <iostream>
 #include <unistd.h>
 #include <csignal>
@@ -134,7 +128,7 @@ void Init_window()
 
 int main(int argc, char **argv)
 {
-    std::cout << std::fixed << std::setprecision(2);
+    std::cout << std::fixed << std::setprecision(4);
     IOinterface *ioInter;
     CtrlPlatform ctrlPlat;
 
@@ -161,8 +155,10 @@ int main(int argc, char **argv)
     pinocchio::Data *data;
     model = new pinocchio::Model();
     pinocchio::JointModelFreeFlyer root_joint;
-    pinocchio::urdf::buildModel(h1urdf,root_joint,*model);
+    pinocchio::urdf::buildModel(h1urdf, root_joint, *model);
     data = new pinocchio::Data(*model);
+
+    Pinody *pinody = new Pinody(model,data);
 
     
 
@@ -172,7 +168,7 @@ int main(int argc, char **argv)
 
     h1Robot *h1 = new h1Robot();
     Dynamics *dy = new Dynamics(h1);
-    CtrlComponents *ctrlComp = new CtrlComponents(ioInter, dy, d, m);
+    CtrlComponents *ctrlComp = new CtrlComponents(ioInter, dy, d, m, pinody);
     ctrlComp->ctrlPlatform = ctrlPlat;
     ctrlComp->dt = 0.001; // run at 1000hz
     ctrlComp->running = &running;

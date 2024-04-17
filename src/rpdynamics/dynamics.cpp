@@ -396,9 +396,9 @@ MatX Dynamics::Cal_Gravity_Term()
 MatX Dynamics::Cal_Geometric_Jacobain(int ib, Coordiante coordinate)
 {
     _robot->Update_Model();
-    MatX J;
+    MatX J, J_ext;
     J.setZero(6, _NB); // initialize Jacobian matrix
-
+    J_ext.setZero(6, _NB + 6);
     // initial k set
     int *k, *k_temp;
     k = new int[_NB];
@@ -437,19 +437,23 @@ MatX Dynamics::Cal_Geometric_Jacobain(int ib, Coordiante coordinate)
             X_up = X_up * _X_uptree[i];
             J.block(0, k[i - 1], 6, 1) = X_up * _joint[k[i - 1]]._S_Body;
         }
-    }
-    else if (coordinate == Coordiante::INERTIAL)
-    {
-        Mat6 X_up;
-        X_up.setIdentity(6, 6);
-        J.block(0, k[num - 1], 6, 1) = _joint[k[num - 1]]._S_Body;
-        for (int i = num - 1; i > 0; --i)
-        {
-            X_up = X_up * _X_uptree[i];
-            J.block(0, k[i - 1], 6, 1) = X_up * _joint[k[i - 1]]._S_Body;
         }
-        J = _robot->_base->_fltjoint->_X_Base2Wrd * J;
-    }
+        else if (coordinate == Coordiante::INERTIAL)
+        {
+
+            Eigen::Matrix<double, 6, 6> X_down;
+            X_down.setIdentity(6, 6);
+            for (int i = 0; i < num; i++)
+            {
+                X_down = X_down * _X_dwtree[k[i]];
+                J.block(0, k[i], 6, 1) = X_down * _joint[k[i]]._S_Body;
+            }
+            J = _robot->_base->_fltjoint->_X_Base2Wrd * J;
+            J_ext.block(0, 0, 6, 6) = _robot->_base->_fltjoint->_X_Base2Wrd;
+            J_ext.block(0, 6, 6, _NB) = J;
+
+            return J_ext;
+        }
     return J;
 }
 
@@ -567,7 +571,7 @@ MatX Dynamics::Cal_K_Flt(MatX &k)
         }
         ref_X_p = _robot->_base->_fltjoint->_X_Base2Wrd * X_down;
         _ref_X_p[nl] = ref_X_p;
-        if (_lpjoint[nl]._pre == WORLD)
+        if (_lpjoint[nl]._pre == Coor_WORLD)
         {
             vp.setZero(6, 1);
             ap.setZero(6, 1);
@@ -577,7 +581,7 @@ MatX Dynamics::Cal_K_Flt(MatX &k)
             vp = ref_X_p * _v[_lpjoint[nl]._pre];
             ap = ref_X_p * _avp[_lpjoint[nl]._pre];
         }
-        if (_lpjoint[nl]._suc == WORLD)
+        if (_lpjoint[nl]._suc == Coor_WORLD)
         {
             vs.setZero(6, 1);
             as.setZero(6, 1);

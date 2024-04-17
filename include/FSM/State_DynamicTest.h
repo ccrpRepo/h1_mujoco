@@ -3,10 +3,10 @@
 
 #include "FSM/FSMState.h"
 
-class State_DynamicTest : public FSMState
+struct State_DynamicTest : public FSMState
 {
 public:
-    State_DynamicTest(CtrlComponents *ctrlComp);
+    State_DynamicTest(CtrlComponents* ctrlComp);
     ~State_DynamicTest(){};
     void enter();
     void run();
@@ -14,6 +14,7 @@ public:
     FSMStateName checkChange();
 
 private:
+    Eigen::Matrix<double, 19, 1> des_q;
     Dynamics *_dy;
 };
 
