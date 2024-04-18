@@ -10,7 +10,7 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
         if (contact(i) == 1)
             contact_num++;
     }
-    Js.setZero(contact_num * 6, 25);
+    Js.setZero(contact_num * 5, 25);
     _pinody->_q.setZero(_pinody->_model->nq);
     _pinody->_qd.setZero(_pinody->_model->nv);
     _pinody->_q(0) = _dy->_quat_xyz[4]; // x
@@ -65,7 +65,8 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
     {
         if (contact(i))
         {
-            Js.block(row_index * 6, 0, 6, 25) = _J[i];
+            Js.block(row_index * 5, 0, 3, 25) = _J[i].block(0, 0, 3, 25);
+            Js.block(row_index * 5 + 3, 0, 2, 25) = _J[i].block(4, 0, 2, 25);
             row_index++;
         }
         
@@ -77,21 +78,21 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
     Eigen::MatrixXd Q_init = qr.householderQ();
     Eigen::MatrixXd R_init = qr.matrixQR().triangularView<Eigen::Upper>();
 
-    _Qc.setZero(25, 6 * contact_num);
-    _Qu.setZero(25, 25 - (6 * contact_num));
-    _R.setZero(6 * contact_num, 6 * contact_num);
-    _Qc = Q_init.block(0, 0, 25, 6 * contact_num);
-    _Qu = Q_init.block(0, 6 * contact_num, 25, 25 - (6 * contact_num));
-    _R = R_init.block(0, 0, 6 * contact_num, 6 * contact_num);
+    _Qc.setZero(25, 5 * contact_num);
+    _Qu.setZero(25, 25 - (5 * contact_num));
+    _R.setZero(5 * contact_num, 5 * contact_num);
+    _Qc = Q_init.block(0, 0, 25, 5 * contact_num);
+    _Qu = Q_init.block(0, 5 * contact_num, 25, 25 - (5 * contact_num));
+    _R = R_init.block(0, 0, 5 * contact_num, 5 * contact_num);
 
     _S.setZero(19, 25);
     _S.block(0, 6, 19, 19).setIdentity(19, 19);
 
     MatX A, b;
-    A.setZero(25 - (6 * contact_num), 44);
-    b.setZero(25 - (6 * contact_num), 1);
-    A.block(0, 0, 25 - (6 * contact_num), 25) = _Qu.transpose() * (-_H);
-    A.block(0, 25, 25 - (6 * contact_num), 19) = _Qu.transpose() * _S.transpose();
+    A.setZero(25 - (5 * contact_num), 44);
+    b.setZero(25 - (5 * contact_num), 1);
+    A.block(0, 0, 25 - (5 * contact_num), 25) = _Qu.transpose() * (-_H);
+    A.block(0, 25, 25 - (5 * contact_num), 19) = _Qu.transpose() * _S.transpose();
     b = _Qu.transpose() * _C;
 
     _eq_task[0] = new eq_Task(A, b, true);
@@ -225,7 +226,7 @@ void WBC::body_yaw_height_task(double yaw_acc, double height_acc)
     A.block(0, 0, 2, 25) = _I_yaw_height;
     b = yaw_height;
 
-    _eq_task[4] = new eq_Task(A, b, true);
+    _eq_task[5] = new eq_Task(A, b, true);
 }
 
 void WBC::body_roll_pitch_task(double roll_acc, double pitch_acc)
@@ -238,7 +239,7 @@ void WBC::body_roll_pitch_task(double roll_acc, double pitch_acc)
     A.block(0, 0, 2, 25) = _I_roll_pitch;
     b = roll_pitch;
 
-    _eq_task[5] = new eq_Task(A, b, true);
+    _eq_task[4] = new eq_Task(A, b, true);
 }
 
 void WBC::torque_limit_task(VecInt2 contact, bool active)
@@ -291,11 +292,11 @@ void WBC::friction_cone_task(VecInt2 contact)
             row_index++;
         }
     }
-    MatX S_625_ext;
-    S_625_ext.setZero(5 * contact_num, 6 * contact_num);
+    MatX S_525_ext;
+    S_525_ext.setZero(5 * contact_num, 5 * contact_num);
     for (int i = 0; i < contact_num; i++)
     {
-        S_625_ext.block(i * 5, i * 6, 5, 6) = _S_625;
+        S_525_ext.block(i * 5, i * 5, 5, 5) = _S_525;
     }
     MatX B, beta;
     B.setZero(9 * contact_num, 5 * contact_num);
@@ -308,7 +309,12 @@ void WBC::friction_cone_task(VecInt2 contact)
 
     MatX brsR_1Qc_T;
     brsR_1Qc_T.setZero(9 * contact_num, 25);
-    brsR_1Qc_T = B * s_R_f_ext * S_625_ext * _R.inverse() * _Qc.transpose();
+    double R_det = _R.determinant();
+    if (R_det *R_det < 0.1)
+    {
+        _R += Eigen::MatrixXd::Identity(_R.rows(), _R.cols()) * 0.1f;
+    }
+    brsR_1Qc_T = B * s_R_f_ext * S_525_ext * _R.inverse() * _Qc.transpose();
 
     MatX D, f;
     D.setZero(9 * contact_num, 44);
@@ -317,63 +323,10 @@ void WBC::friction_cone_task(VecInt2 contact)
     D.block(0, 0, 9 * contact_num, 25) = brsR_1Qc_T * (-_H);
     D.block(0, 25, 9 * contact_num, 19) = brsR_1Qc_T * _S.transpose();
 
-    std::cout << "_R.inverse(): " << std::endl
-              << _R.inverse() << std::endl;
-
     f = beta - brsR_1Qc_T * _C;
 
     _ineq_task = new ineq_Task(D, f);
 
-    // MatX D, f;
-    // int row_index = 0;
-    // MatX B;
-    // MatX ref_R_s_ext;
-    // int contact_num = 0;
-    // for (int i = 0; i < 2; i++)
-    // {
-    //     if (contact(i) == 1)
-    //         contact_num++;
-    // }
-
-    // D.setZero(9 * contact_num, 44);
-    // f.setZero(9 * contact_num, 1);
-    // B.setZero(9 * contact_num, 5 * contact_num);
-    // ref_R_s_ext.setIdentity(contact_num * 5, contact_num * 5);
-    // for (int i = 0; i < contact_num; i++)
-    // {
-    //     B.block(9 * i, 5 * i, 9, 5) = _Ffri;
-    // }
-    // Mat3 Iden;
-    // Iden.setIdentity(3, 3);
-    // for (int i = 0; i < 2; i++)
-    // {
-    //     if (contact(i) == 1)
-    //     {
-    //         ref_R_s_ext.block(row_index * 5 + 2, row_index * 5 + 2, 3, 3) = _dy->_ref_R_s[i]; //_dy->_ref_R_s[i];
-    //         row_index++;
-    //     }
-    // }
-    // MatX KK_T = _K * _K.transpose();
-    // MatX K_leftinv = KK_T.inverse() * _K;
-    // MatX D_temp;
-    // D_temp.setZero(25, 44);
-    // D_temp.block(0, 0, 25, 25) = -_H;
-    // D_temp.block(0, 25, 25, 19) = _S.transpose();
-    // MatX BRK_inv, Fri_beta;
-    // Fri_beta.setZero(9 * contact_num, 1);
-    // Fri_beta.block(0,0,9,1) = _fri_beta;
-    // if (contact_num == 2)
-    // {
-    //     Fri_beta.block(9, 0, 9, 1) = _fri_beta;
-    // }
-    // BRK_inv.setZero(9 * contact_num, 25);
-    // BRK_inv = B * ref_R_s_ext * K_leftinv;
-    // D = BRK_inv * D_temp;
-    // f = Fri_beta - BRK_inv * _C;
-    // _D = D;
-    // _f = f;
-
-    // _ineq_task = new ineq_Task(D, f);
 }
 
 void WBC::set_contact_frition(double fri)

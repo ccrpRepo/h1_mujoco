@@ -150,6 +150,11 @@ void State_DynamicTest::run()
     Eigen::MatrixXd Q_init = qr.householderQ();
     Eigen::MatrixXd R_init = qr.matrixQR().triangularView<Eigen::Upper>();
 
+    std::cout << "Q_init: " << std::endl
+              << Q_init << std::endl;
+    std::cout << "R_init: " << std::endl
+              << R_init << std::endl;
+
     MatX Qc, Qu, R;
     Qc.setZero(25, 12);
     Qu.setZero(25, 13);

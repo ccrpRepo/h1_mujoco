@@ -95,20 +95,20 @@ struct LowlevelCmd
     void setSimStanceGain(int legID)
     {
         motorCmd[legID * 5 + 0].mode = 10;
-        motorCmd[legID * 5 + 0].Kp = 10; //180
-        motorCmd[legID * 5 + 0].Kd = 1; //8
+        motorCmd[legID * 5 + 0].Kp = 30; //180
+        motorCmd[legID * 5 + 0].Kd = 5; //8
         motorCmd[legID * 5 + 1].mode = 10;
-        motorCmd[legID * 5 + 1].Kp = 10; // 180
-        motorCmd[legID * 5 + 1].Kd = 1; //8
+        motorCmd[legID * 5 + 1].Kp = 30; // 180
+        motorCmd[legID * 5 + 1].Kd = 5; //8
         motorCmd[legID * 5 + 2].mode = 10;
-        motorCmd[legID * 5 + 2].Kp = 10; // 300
-        motorCmd[legID * 5 + 2].Kd = 1; //15
+        motorCmd[legID * 5 + 2].Kp = 40; // 300
+        motorCmd[legID * 5 + 2].Kd = 6; //15
         motorCmd[legID * 5 + 3].mode = 10;
-        motorCmd[legID * 5 + 3].Kp = 10; // 180
-        motorCmd[legID * 5 + 3].Kd = 1; // 8
+        motorCmd[legID * 5 + 3].Kp = 40; // 180
+        motorCmd[legID * 5 + 3].Kd = 6; // 8
         motorCmd[legID * 5 + 4].mode = 10;
-        motorCmd[legID * 5 + 4].Kp = 10; // 300
-        motorCmd[legID * 5 + 4].Kd = 1; // 15
+        motorCmd[legID * 5 + 4].Kp = 20; // 300
+        motorCmd[legID * 5 + 4].Kd = 3; // 15
     }
     void setRealStanceGain(int legID)
     {

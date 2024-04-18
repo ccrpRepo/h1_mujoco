@@ -68,7 +68,7 @@ void State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
 
-    _wbc->set_contact_frition(0.35);
+    _wbc->set_contact_frition(0.05);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
     Mat4 T_base;
     T_base.setIdentity(4, 4);
@@ -92,24 +92,24 @@ void State_BalanceStand::run()
     // std::cout << "_posError: " << pos_err.transpose() << std::endl;
     Vec2 ddr_xy;
     Vec2 des_xy = _init_pos.head(2);
-    ddr_xy = 10 * pos_err.head(2);
+    ddr_xy = 50 * pos_err.head(2);
     // ddr_xy << 0, 0;
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec3 swing_acc;
     _wbc->swing_foot_motion_task(swing_acc, contact, false);
     double yaw_acc = 0, height_acc = 0;
-    height_acc = 10 * pos_err(2); // 20 * pos_err(2)
-    yaw_acc = 10 * anglar_acc(2); //
+    height_acc = 50 * pos_err(2); // 20 * pos_err(2)
+    yaw_acc = 40 * anglar_acc(2); //
     // std::cout << "height_acc: " << height_acc << std::endl;
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
     double roll_acc = 0, pitch_acc = 0;
-    roll_acc = 10 * anglar_acc(0);
+    roll_acc = 50 * anglar_acc(0);
     // std::cout << "roll:" << anglar_acc(0) << std::endl;
-    pitch_acc =  10 * anglar_acc(1);
+    pitch_acc =  150 * anglar_acc(1);
     // std::cout << "pitch:" << anglar_acc(1) << std::endl;
     // std::cout << "anglar_acc: " << anglar_acc.transpose() << std::endl;
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
-    _wbc->torque_limit_task(contact, true);
+    _wbc->torque_limit_task(contact, false);
     _wbc->friction_cone_task(contact);
 
     _wbc->solve_HOproblem();
