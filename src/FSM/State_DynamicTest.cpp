@@ -61,11 +61,11 @@ void State_DynamicTest::run()
 
     q(0) = _dy->_quat_xyz[4]; // x
     q(1) = _dy->_quat_xyz[5]; // y
-    q(2) = _dy->_quat_xyz[6]; // z
-    q(3) = _dy->_quat_xyz[1]; // qua_x
-    q(4) = _dy->_quat_xyz[2]; // qua_y
-    q(5) = _dy->_quat_xyz[3]; // qua_z
-    q(6) = _dy->_quat_xyz[0]; // qua_w
+    q(2) = 1;                 //_dy->_quat_xyz[6]; // z
+    q(3) = 1;                 //_dy->_quat_xyz[1]; // qua_x
+    q(4) = 0;                 //_dy->_quat_xyz[2]; // qua_y
+    q(5) = 0;                 //_dy->_quat_xyz[3]; // qua_z
+    q(6) = 0;                 //_dy->_quat_xyz[0]; // qua_w
 
     qd(0) = _dy->_robot->_v_base[3]; // vx
     qd(1) = _dy->_robot->_v_base[4]; // vy
@@ -79,7 +79,7 @@ void State_DynamicTest::run()
         q(i+7) = _dy->_q[i];
         qd(i+6) = _dy->_dq[i];
     }
-
+    std::cout << "q: " << q.transpose() << std::endl;
     pinocchio::Model *model;
     pinocchio::Data *data;
     model = _ctrlComp->_pinody->_model;
@@ -117,6 +117,9 @@ void State_DynamicTest::run()
     joint_index[17] = model->getFrameId("right_shoulder_yaw_joint");
     joint_index[18] = model->getFrameId("right_elbow_joint");
 
+    int pelvis_index = model->getFrameId("pelvis");
+    int rootjoint_index = model->getFrameId("root_joint");
+    
     Eigen::Matrix<double, 6, 25> Jl[2];
     Eigen::Matrix<double, 6, 25> dJl[2];
     Eigen::MatrixXd my_Jl;
@@ -179,14 +182,24 @@ void State_DynamicTest::run()
     VecX qdd;
     qdd.setOnes(25);
 
-    Eigen::Matrix<double,25,1>  my_tau =  my_H *qdd + my_C;
-    Eigen::Matrix<double, 25, 1> tau = H * qdd + C;
+    Mat4 T_lfoot = data->oMi[joint_index[4]];
+    Mat4 T_rfoot = data->oMi[joint_index[9]];
+    Mat4 T_Base2Wrd = data->oMi[pelvis_index];
+    Mat4 T_flt = data->oMi[rootjoint_index];
 
-    std::cout << "my tau: " << my_tau.transpose()<<std::endl;
-    std::cout << "pi tau: " << tau.transpose() << std::endl;
+    Mat4 T_foot2Base = T_flt.inverse() * T_lfoot;
+
+    std::cout
+        << "T_foot2Base: " << std::endl
+        << T_foot2Base << std::endl;
+
+    std::cout
+        << "T_flt: " << std::endl
+        << T_flt << std::endl;
+
     // tau = C.tail(19);
     // _lowCmd->setTau(tau);
-    // _lowCmd->setQ(des_q);
+    _lowCmd->setQ(des_q);
 
     // _ctrlComp->_d->qfrc_applied[1] = 1;
 }

@@ -87,6 +87,12 @@ public:
         _min_ident.setIdentity(44, 44);
         _min_ident = _min_ident * 0.001;
         _pinody = pinody;
+
+        _S_625 << 0, 0, 0, 0, 1, 0,
+                  0, 0, 0, 0, 0, 1,
+                  1, 0, 0, 0, 0, 0,
+                  0, 1, 0, 0, 0, 0,
+                  0, 0, 1, 0, 0, 0;
     }
     ~WBC()
     {
@@ -124,6 +130,7 @@ public:
     Eigen::Matrix<double, 6, 25> _J[2];
     Eigen::Matrix<double, 6, 25> _dJ[2];
     MatX _Qc, _Qu, _R;
+    Eigen::Matrix<double, 5, 6> _S_625;
 
     void dynamics_consistence_task(VecInt2 contact);
     void closure_constrain_task(VecInt2 contact);

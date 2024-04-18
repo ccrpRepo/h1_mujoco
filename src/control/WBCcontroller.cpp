@@ -37,26 +37,6 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
     pinocchio::Data *data;
     model = _pinody->_model;
     data = _pinody->_data;
-    int joint_index[19] = {0};
-    joint_index[0] = model->getFrameId("left_hip_yaw_joint");
-    joint_index[1] = model->getFrameId("left_hip_roll_joint");
-    joint_index[2] = model->getFrameId("left_hip_pitch_joint");
-    joint_index[3] = model->getFrameId("left_knee_joint");
-    joint_index[4] = model->getFrameId("left_ankle_joint");
-    joint_index[5] = model->getFrameId("right_hip_yaw_joint");
-    joint_index[6] = model->getFrameId("right_hip_roll_joint");
-    joint_index[7] = model->getFrameId("right_hip_pitch_joint");
-    joint_index[8] = model->getFrameId("right_knee_joint");
-    joint_index[9] = model->getFrameId("right_ankle_joint");
-    joint_index[10] = model->getFrameId("torso_link");
-    joint_index[11] = model->getFrameId("left_shoulder_pitch_joint");
-    joint_index[12] = model->getFrameId("left_shoulder_roll_joint");
-    joint_index[13] = model->getFrameId("left_shoulder_yaw_joint");
-    joint_index[14] = model->getFrameId("left_elbow_joint");
-    joint_index[15] = model->getFrameId("right_shoulder_pitch_joint");
-    joint_index[16] = model->getFrameId("right_shoulder_roll_joint");
-    joint_index[17] = model->getFrameId("right_shoulder_yaw_joint");
-    joint_index[18] = model->getFrameId("right_elbow_joint");
 
     pinocchio::forwardKinematics(*(model), *(data), _pinody->_q, _pinody->_qd);
     pinocchio::framesForwardKinematics(*model, *data, _pinody->_q);
@@ -75,10 +55,10 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
     _J[1].setZero();
     _dJ[0].setZero();
     _dJ[1].setZero();
-    pinocchio::getFrameJacobian(*model, *data, joint_index[4], pinocchio::LOCAL, _J[0]);
-    pinocchio::getFrameJacobian(*model, *data, joint_index[9], pinocchio::LOCAL, _J[1]);
-    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[4], pinocchio::LOCAL, _dJ[0]);
-    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[9], pinocchio::LOCAL, _dJ[1]);
+    pinocchio::getFrameJacobian(*model, *data, _pinody->joint_index[4], pinocchio::LOCAL, _J[0]);
+    pinocchio::getFrameJacobian(*model, *data, _pinody->joint_index[9], pinocchio::LOCAL, _J[1]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, _pinody->joint_index[4], pinocchio::LOCAL, _dJ[0]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, _pinody->joint_index[9], pinocchio::LOCAL, _dJ[1]);
 
     int row_index = 0;
     for (int i = 0; i < 2;i++)
@@ -135,23 +115,13 @@ void WBC::closure_constrain_task(VecInt2 contact)
     {
         if (contact(i))
         {
-            JF.block(row_index * 5, 0, 5, 25) = _J[i].block(1, 0, 5, 25);
-            row_index++;
-        }
-        
-    }
-    row_index = 0;
-    for (int i = 0; i < 2; i++)
-    {
-        if (contact(i))
-        {
-            dJF.block(row_index * 5, 0, 5, 25) = _dJ[i].block(1, 0, 5, 25);
+            JF.block(row_index * 5, 0, 3, 25) = _J[i].block(0, 0, 5, 25);
+            JF.block(row_index * 5 + 3, 0, 2, 25) = _J[i].block(4, 0, 2, 25);
+            dJF.block(row_index * 5, 0, 3, 25) = _dJ[i].block(0, 0, 3, 25);
+            dJF.block(row_index * 5 + 3, 0, 2, 25) = _dJ[i].block(4, 0, 2, 25);
             row_index++;
         }
     }
-
-    std::cout << "dJF: " << std::endl
-              << dJF << std::endl;
 
     MatX A, b;
     A.setZero(5 * contact_num, 44);
@@ -297,58 +267,113 @@ void WBC::torque_limit_task(VecInt2 contact, bool active)
 // contact is the contact situation of foots   1: contact; 0: swing
 void WBC::friction_cone_task(VecInt2 contact)
 {
-    MatX D, f;
-    int row_index = 0;
-    MatX B;
-    MatX ref_R_s_ext;
     int contact_num = 0;
     for (int i = 0; i < 2; i++)
     {
         if (contact(i) == 1)
             contact_num++;
     }
+    Mat4 T_lfoot = _pinody->_data->oMi[_pinody->joint_index[4]];
+    Mat4 T_rfoot = _pinody->_data->oMi[_pinody->joint_index[9]];
 
-    D.setZero(9 * contact_num, 44);
-    f.setZero(9 * contact_num, 1);
-    B.setZero(9 * contact_num, 5 * contact_num);
-    ref_R_s_ext.setIdentity(contact_num * 5, contact_num * 5);
-    for (int i = 0; i < contact_num; i++)
-    {
-        B.block(9 * i, 5 * i, 9, 5) = _Ffri;
-    }
-    Mat3 Iden;
-    Iden.setIdentity(3, 3);
+    Mat3 s_R_foot[2];
+    s_R_foot[0] = T_lfoot.block(0, 0, 3, 3);
+    s_R_foot[1] = T_rfoot.block(0, 0, 3, 3);
+
+    MatX s_R_f_ext;
+    s_R_f_ext.setIdentity(contact_num * 5, contact_num * 5);
+    int row_index = 0;
     for (int i = 0; i < 2; i++)
     {
-        if (contact(i) == 1)
+        if (contact(i))
         {
-            ref_R_s_ext.block(row_index * 5 + 2, row_index * 5 + 2, 3, 3) = _dy->_ref_R_s[i]; //_dy->_ref_R_s[i];
+            s_R_f_ext.block(row_index * 5 + 2, row_index * 5 + 2, 3, 3) = s_R_foot[i];
             row_index++;
         }
     }
-    MatX KK_T = _K * _K.transpose();
-    MatX K_leftinv = KK_T.inverse() * _K;
-    MatX D_temp;
-    D_temp.setZero(25, 44);
-    D_temp.block(0, 0, 25, 25) = -_H;
-    D_temp.block(0, 25, 25, 19) = _S.transpose();
-    MatX BRK_inv, Fri_beta;
-    Fri_beta.setZero(9 * contact_num, 1);
-    Fri_beta.block(0,0,9,1) = _fri_beta;
-    if (contact_num == 2)
+    MatX S_625_ext;
+    S_625_ext.setZero(5 * contact_num, 6 * contact_num);
+    for (int i = 0; i < contact_num; i++)
     {
-        Fri_beta.block(9, 0, 9, 1) = _fri_beta;
+        S_625_ext.block(i * 5, i * 6, 5, 6) = _S_625;
     }
-    BRK_inv.setZero(9 * contact_num, 25);
-    BRK_inv = B * ref_R_s_ext * K_leftinv;
-    D = BRK_inv * D_temp;
-    f = Fri_beta - BRK_inv * _C;
-    _D = D;
-    _f = f;
+    MatX B, beta;
+    B.setZero(9 * contact_num, 5 * contact_num);
+    beta.setZero(9 * contact_num, 1);
+    for (int i = 0; i < contact_num; i++)
+    {
+        B.block(9 * i, 5 * i, 9, 5) = _Ffri;
+        beta.block(9 * i, 0, 9, 1) = _fri_beta;
+    }
+
+    MatX brsR_1Qc_T;
+    brsR_1Qc_T.setZero(9 * contact_num, 25);
+    brsR_1Qc_T = B * s_R_f_ext * S_625_ext * _R.inverse() * _Qc.transpose();
+
+    MatX D, f;
+    D.setZero(9 * contact_num, 44);
+    f.setZero(9 * contact_num, 1);
+
+    D.block(0, 0, 9 * contact_num, 25) = brsR_1Qc_T * (-_H);
+    D.block(0, 25, 9 * contact_num, 19) = brsR_1Qc_T * _S.transpose();
+
+    std::cout << "_R.inverse(): " << std::endl
+              << _R.inverse() << std::endl;
+
+    f = beta - brsR_1Qc_T * _C;
 
     _ineq_task = new ineq_Task(D, f);
 
+    // MatX D, f;
+    // int row_index = 0;
+    // MatX B;
+    // MatX ref_R_s_ext;
+    // int contact_num = 0;
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     if (contact(i) == 1)
+    //         contact_num++;
+    // }
 
+    // D.setZero(9 * contact_num, 44);
+    // f.setZero(9 * contact_num, 1);
+    // B.setZero(9 * contact_num, 5 * contact_num);
+    // ref_R_s_ext.setIdentity(contact_num * 5, contact_num * 5);
+    // for (int i = 0; i < contact_num; i++)
+    // {
+    //     B.block(9 * i, 5 * i, 9, 5) = _Ffri;
+    // }
+    // Mat3 Iden;
+    // Iden.setIdentity(3, 3);
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     if (contact(i) == 1)
+    //     {
+    //         ref_R_s_ext.block(row_index * 5 + 2, row_index * 5 + 2, 3, 3) = _dy->_ref_R_s[i]; //_dy->_ref_R_s[i];
+    //         row_index++;
+    //     }
+    // }
+    // MatX KK_T = _K * _K.transpose();
+    // MatX K_leftinv = KK_T.inverse() * _K;
+    // MatX D_temp;
+    // D_temp.setZero(25, 44);
+    // D_temp.block(0, 0, 25, 25) = -_H;
+    // D_temp.block(0, 25, 25, 19) = _S.transpose();
+    // MatX BRK_inv, Fri_beta;
+    // Fri_beta.setZero(9 * contact_num, 1);
+    // Fri_beta.block(0,0,9,1) = _fri_beta;
+    // if (contact_num == 2)
+    // {
+    //     Fri_beta.block(9, 0, 9, 1) = _fri_beta;
+    // }
+    // BRK_inv.setZero(9 * contact_num, 25);
+    // BRK_inv = B * ref_R_s_ext * K_leftinv;
+    // D = BRK_inv * D_temp;
+    // f = Fri_beta - BRK_inv * _C;
+    // _D = D;
+    // _f = f;
+
+    // _ineq_task = new ineq_Task(D, f);
 }
 
 void WBC::set_contact_frition(double fri)
