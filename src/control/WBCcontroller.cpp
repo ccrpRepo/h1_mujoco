@@ -3,7 +3,6 @@
 void WBC::dynamics_consistence_task(VecInt2 contact)
 {
     int contact_num = 0;
-    int row_index = 0;
     MatX Js;
     // MatX K_temp, k_temp;
     for (int i = 0; i < 2; i++)
@@ -12,27 +11,26 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
             contact_num++;
     }
     Js.setZero(contact_num * 6, 25);
-    Eigen::VectorXd q(_pinody->_model->nq);
-    Eigen::VectorXd qd(_pinody->_model->nv);
-    q(0) = _dy->_quat_xyz[4]; // x
-    q(1) = _dy->_quat_xyz[5]; // y
-    q(2) = _dy->_quat_xyz[6]; // z
-    q(3) = _dy->_quat_xyz[1]; // qua_x
-    q(4) = _dy->_quat_xyz[2]; // qua_y
-    q(5) = _dy->_quat_xyz[3]; // qua_z
-    q(6) = _dy->_quat_xyz[0]; // qua_w
+    _pinody->_q.setZero(_pinody->_model->nq);
+    _pinody->_qd.setZero(_pinody->_model->nv);
+    _pinody->_q(0) = _dy->_quat_xyz[4]; // x
+    _pinody->_q(1) = _dy->_quat_xyz[5]; // y
+    _pinody->_q(2) = _dy->_quat_xyz[6]; // z
+    _pinody->_q(3) = _dy->_quat_xyz[1]; // qua_x
+    _pinody->_q(4) = _dy->_quat_xyz[2]; // qua_y
+    _pinody->_q(5) = _dy->_quat_xyz[3]; // qua_z
+    _pinody->_q(6) = _dy->_quat_xyz[0]; // qua_w
 
-    qd(0) = _dy->_robot->_v_base[3]; //vx
-    qd(1) = _dy->_robot->_v_base[4]; // vy
-    qd(2) = _dy->_robot->_v_base[5]; // vz
-    qd(3) = _dy->_robot->_v_base[0]; // wx
-    qd(4) = _dy->_robot->_v_base[1]; // wy
-    qd(5) = _dy->_robot->_v_base[2]; // wz
-
+    _pinody->_qd(0) = _dy->_robot->_v_base[3]; // vx
+    _pinody->_qd(1) = _dy->_robot->_v_base[4]; // vy
+    _pinody->_qd(2) = _dy->_robot->_v_base[5]; // vz
+    _pinody->_qd(3) = _dy->_robot->_v_base[0]; // wx
+    _pinody->_qd(4) = _dy->_robot->_v_base[1]; // wy
+    _pinody->_qd(5) = _dy->_robot->_v_base[2]; // wz
     for (int i = 0; i < 19; i++)
     {
-        q(i + 7) = _dy->_q[i];
-        qd(i + 6) = _dy->_dq[i];
+        _pinody->_q(i + 7) = _dy->_q[i];
+        _pinody->_qd(i + 6) = _dy->_dq[i];
     }
 
     pinocchio::Model *model;
@@ -60,85 +58,106 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
     joint_index[17] = model->getFrameId("right_shoulder_yaw_joint");
     joint_index[18] = model->getFrameId("right_elbow_joint");
 
-    pinocchio::forwardKinematics(*(model), *(data), q, qd);
-    pinocchio::framesForwardKinematics(*model, *data, q);
+    pinocchio::forwardKinematics(*(model), *(data), _pinody->_q, _pinody->_qd);
+    pinocchio::framesForwardKinematics(*model, *data, _pinody->_q);
     pinocchio::computeJointJacobians(*(model), *(data));
     pinocchio::updateFramePlacements(*model, *data);
-    pinocchio::nonLinearEffects(*(model), *(data), q, qd);
-    pinocchio::computeJointJacobiansTimeVariation(*model, *data, q, qd);
+    pinocchio::nonLinearEffects(*(model), *(data), _pinody->_q, _pinody->_qd);
+    pinocchio::crba(*model, *data, _pinody->_q);
+    pinocchio::computeJointJacobiansTimeVariation(*model, *data, _pinody->_q, _pinody->_qd);
 
+    _H.setZero();
     _H = data->M;
+    _C.setZero();
     _C = data->nle;
 
-    _J->setZero();
-    _dJ->setZero();
+    _J[0].setZero();
+    _J[1].setZero();
+    _dJ[0].setZero();
+    _dJ[1].setZero();
+    pinocchio::getFrameJacobian(*model, *data, joint_index[4], pinocchio::LOCAL, _J[0]);
+    pinocchio::getFrameJacobian(*model, *data, joint_index[9], pinocchio::LOCAL, _J[1]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[4], pinocchio::LOCAL, _dJ[0]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[9], pinocchio::LOCAL, _dJ[1]);
 
-    pinocchio::getFrameJacobian(*model, *data, joint_index[4], pinocchio::LOCAL_WORLD_ALIGNED, _J[0]);
-    pinocchio::getFrameJacobian(*model, *data, joint_index[9], pinocchio::LOCAL_WORLD_ALIGNED, _J[1]);
-    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[4], pinocchio::LOCAL_WORLD_ALIGNED, _dJ[0]);
-    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[9], pinocchio::LOCAL_WORLD_ALIGNED, _dJ[1]);
-
-    for (int i = 0; i < contact_num;i++)
+    int row_index = 0;
+    for (int i = 0; i < 2;i++)
     {
-        if (contact(0))
-            Js.block(0 + contact_num * 6, 0, 6, 25) = _J[0];
-        if (contact(1))
-            Js.block(0 + contact_num * 6, 0, 6, 25) = _J[1];
+        if (contact(i))
+        {
+            Js.block(row_index * 6, 0, 6, 25) = _J[i];
+            row_index++;
+        }
+        
     }
 
-    // calculate general inertial matrix
-    // _H = _dy->Cal_Generalize_Inertial_Matrix_CRBA_Flt(_H_fl);
+    MatX Js_T = Js.transpose();
+
+    Eigen::HouseholderQR<Eigen::MatrixXd> qr = Js_T.householderQr();
+    Eigen::MatrixXd Q_init = qr.householderQ();
+    Eigen::MatrixXd R_init = qr.matrixQR().triangularView<Eigen::Upper>();
+
+    _Qc.setZero(25, 6 * contact_num);
+    _Qu.setZero(25, 25 - (6 * contact_num));
+    _R.setZero(6 * contact_num, 6 * contact_num);
+    _Qc = Q_init.block(0, 0, 25, 6 * contact_num);
+    _Qu = Q_init.block(0, 6 * contact_num, 25, 25 - (6 * contact_num));
+    _R = R_init.block(0, 0, 6 * contact_num, 6 * contact_num);
+
+    _S.setZero(19, 25);
+    _S.block(0, 6, 19, 19).setIdentity(19, 19);
+
+    MatX A, b;
+    A.setZero(25 - (6 * contact_num), 44);
+    b.setZero(25 - (6 * contact_num), 1);
+    A.block(0, 0, 25 - (6 * contact_num), 25) = _Qu.transpose() * (-_H);
+    A.block(0, 25, 25 - (6 * contact_num), 19) = _Qu.transpose() * _S.transpose();
+    b = _Qu.transpose() * _C;
+
+    _eq_task[0] = new eq_Task(A, b, true);
     
-    // calculate general bias force
-    // _C = _dy->Cal_Generalize_Bias_force_Flt(true);
-    // calculate constrain matrix K and k
-    // K_temp = _dy->Cal_K_Flt(k_temp);
-    // _g = _dy->Cal_Gravity_Term();
-    
-    // _K.setZero(contact_num * 5, 25);
-    // _k.setZero(contact_num * 5, 1);
-    // for (int i = 0; i < 2; i++)
-    // {
-    //     if (contact(i) == 1)
-    //     {
-    //         _K.block(5 * row_index, 0, 5, 25) = K_temp.block(5 * i, 0, 5, 25);
-    //         _k.block(5 * row_index, 0, 5, 1) = k_temp.block(5 * i, 0, 5, 1);
-    //         row_index++;
-    //     }
-    // }
-    // calculate nullspace matrix of K
-    // Eigen::FullPivLU<MatX> lu(_K);
-    // _G = lu.kernel();
-
-    // // dynamics constrain A and b
-    // MatX A, b;
-    // int cols, rows;
-    // rows = _G.rows(); // G : rows x cols   G^T : cols x rows
-    // cols = _G.cols();
-    // A.setZero(cols, 44);
-    // b.setZero(cols, 1);
-    // _S.setZero(19, 25);
-    // _S.block(0, 6, 19, 19).setIdentity(19, 19);
-    // A.block(0, 0, cols, 25) = _G.transpose() * _H;
-    // A.block(0, 25, cols, 19) = -_G.transpose() * _S.transpose();
-
-    // b = -_G.transpose() * _C;
-
-    // _eq_task[0] = new eq_Task(A, b, true);
-
-    // std::cout << "A: " << std::endl << A << std::endl;
-    // std::cout << "b: " << b.transpose() << std::endl;
 }
 
-void WBC::closure_constrain_task()
+void WBC::closure_constrain_task(VecInt2 contact)
 {
+    int contact_num = 0;
+    for (int i = 0; i < 2; i++)
+    {
+        if (contact(i) == 1)
+            contact_num++;
+    }
+    MatX JF, dJF;
+    JF.setZero(5 * contact_num, 25);
+    dJF.setZero(5 * contact_num, 25);
+
+    int row_index = 0;
+    for (int i = 0; i < 2; i++)
+    {
+        if (contact(i))
+        {
+            JF.block(row_index * 5, 0, 5, 25) = _J[i].block(1, 0, 5, 25);
+            row_index++;
+        }
+        
+    }
+    row_index = 0;
+    for (int i = 0; i < 2; i++)
+    {
+        if (contact(i))
+        {
+            dJF.block(row_index * 5, 0, 5, 25) = _dJ[i].block(1, 0, 5, 25);
+            row_index++;
+        }
+    }
+
+    std::cout << "dJF: " << std::endl
+              << dJF << std::endl;
+
     MatX A, b;
-    int cols, rows;
-    rows = _K.rows(); // K : rows x cols
-    cols = _K.cols();
-    A.setZero(rows, 44);
-    A.block(0, 0, rows, 25) = _K;
-    b = _k;
+    A.setZero(5 * contact_num, 44);
+    b.setZero(5 * contact_num, 1);
+    A.block(0, 0, 5 * contact_num, 25) = JF;
+    b = -dJF * _pinody->_qd;
 
     _eq_task[1] = new eq_Task(A, b, true);
 }
@@ -328,6 +347,8 @@ void WBC::friction_cone_task(VecInt2 contact)
     _f = f;
 
     _ineq_task = new ineq_Task(D, f);
+
+
 }
 
 void WBC::set_contact_frition(double fri)

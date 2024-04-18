@@ -59,16 +59,16 @@ public:
     WBC(Dynamics *dy, Pinody *pinody) : _dy(dy)
     {
         _I_xy.setZero(2, 25);
-        _I_xy << 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+        _I_xy << 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
         _I_yaw_height.setZero(2, 25);
-        _I_yaw_height << 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+        _I_yaw_height << 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
         _I_roll_pitch.setZero(2, 25);
-        _I_roll_pitch << 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+        _I_roll_pitch << 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
         _I_torque.setIdentity(19, 19);
 
         _frition = 0.35;
@@ -123,9 +123,10 @@ public:
     Pinody *_pinody;
     Eigen::Matrix<double, 6, 25> _J[2];
     Eigen::Matrix<double, 6, 25> _dJ[2];
+    MatX _Qc, _Qu, _R;
 
     void dynamics_consistence_task(VecInt2 contact);
-    void closure_constrain_task();
+    void closure_constrain_task(VecInt2 contact);
     void desired_torso_motion_task(Vec2 ddr_xy);
     void swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active);
     void body_yaw_height_task(double yaw_acc, double height_acc);

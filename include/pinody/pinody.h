@@ -18,6 +18,8 @@ public:
 
     pinocchio::Model* _model;
     pinocchio::Data* _data;
+    Eigen::VectorXd _q;
+    Eigen::VectorXd _qd;
 
 private: 
 };

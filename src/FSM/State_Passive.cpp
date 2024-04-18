@@ -47,10 +47,10 @@ FSMStateName State_Passive::checkChange()
 {
     if (_lowState->userCmd == UserCommand::L2_A)
     {
-        // return FSMStateName::BALANCESTAND;
+        return FSMStateName::BALANCESTAND;
         // return FSMStateName::FIXEDHANG;
         // return FSMStateName::SWINGTEST;
-        return FSMStateName::DYNAMICTEST;
+        // return FSMStateName::DYNAMICTEST;
         // return FSMStateName::STEPWALKING;
     }
     else

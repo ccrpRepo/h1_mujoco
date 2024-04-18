@@ -394,7 +394,7 @@ void State_StepWalking::calcTau()
     // std::cout << ddp_base.transpose() << std::endl;
     // *_contact << 1, 0;
     _wbc->dynamics_consistence_task(*_contact);
-    _wbc->closure_constrain_task();
+    _wbc->closure_constrain_task(*_contact);
     Vec2 ddr_xy;
     ddr_xy << 30* ddp_base(0), ddp_base(1);
     // ddr_xy.setZero();

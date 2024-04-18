@@ -40,26 +40,39 @@ void State_DynamicTest::enter()
     {
         _ctrlComp->_d->qpos[i] = des_q(i);
     }
+    // _ctrlComp->_d->qpos[0] = 0;
+    // _ctrlComp->_d->qpos[1] = 0;
+    // _ctrlComp->_d->qpos[2] = 1;
 }
 
 void State_DynamicTest::run()
 {
     _ctrlComp->_robot->Update_Model();
 
-    Eigen::Matrix<double, 19, 1> tau;
     MatX Hfl,K,k;
     MatX my_H = _dy->Cal_Generalize_Inertial_Matrix_CRBA_Flt(Hfl);
+    MatX my_C = _dy->Cal_Generalize_Bias_force_Flt(true);
     K = _dy->Cal_K_Flt(k);
-
 
     // Eigen::Matrix<double,25,1> my_C = _dy->Cal_Generalize_Bias_force_Flt(true);
 
     Eigen::VectorXd q(_ctrlComp->_pinody->_model->nq);
     Eigen::VectorXd qd(_ctrlComp->_pinody->_model->nv);
 
-    q.setZero();
-    q.segment(3, 4) << 0, 0, 0, 1; // x y z w
-    qd.setZero();
+    q(0) = _dy->_quat_xyz[4]; // x
+    q(1) = _dy->_quat_xyz[5]; // y
+    q(2) = _dy->_quat_xyz[6]; // z
+    q(3) = _dy->_quat_xyz[1]; // qua_x
+    q(4) = _dy->_quat_xyz[2]; // qua_y
+    q(5) = _dy->_quat_xyz[3]; // qua_z
+    q(6) = _dy->_quat_xyz[0]; // qua_w
+
+    qd(0) = _dy->_robot->_v_base[3]; // vx
+    qd(1) = _dy->_robot->_v_base[4]; // vy
+    qd(2) = _dy->_robot->_v_base[5]; // vz
+    qd(3) = _dy->_robot->_v_base[0]; // wx
+    qd(4) = _dy->_robot->_v_base[1]; // wy
+    qd(5) = _dy->_robot->_v_base[2]; // wz
 
     for(int i = 0; i < 19; i++)
     {
@@ -81,7 +94,7 @@ void State_DynamicTest::run()
 
     // std::cout<<q.transpose()<<std::endl;
     // std::cout<<qd.transpose()<<std::endl;
-    Eigen::VectorXd C_ = data->nle;
+    Eigen::VectorXd C = data->nle;
     Eigen::MatrixXd H = data->M;
     int joint_index[19] = {0};
     joint_index[0] = model->getFrameId("left_hip_yaw_joint");
@@ -105,16 +118,17 @@ void State_DynamicTest::run()
     joint_index[18] = model->getFrameId("right_elbow_joint");
 
     Eigen::Matrix<double, 6, 25> Jl[2];
-    Eigen::Matrix<double, 6, 25> dJl;
+    Eigen::Matrix<double, 6, 25> dJl[2];
     Eigen::MatrixXd my_Jl;
     Jl[0].setZero();
     Jl[1].setZero();
     my_Jl = _dy->Cal_Geometric_Jacobain(4, Coordiante::BODY);
-    pinocchio::getFrameJacobian(*model, *data, joint_index[4], pinocchio::LOCAL_WORLD_ALIGNED, Jl[0]);
-    pinocchio::getFrameJacobian(*model, *data, joint_index[9], pinocchio::LOCAL_WORLD_ALIGNED, Jl[1]);
-    dJl.setZero();
-    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[4], pinocchio::LOCAL_WORLD_ALIGNED, dJl);
-
+    pinocchio::getFrameJacobian(*model, *data, joint_index[4], pinocchio::LOCAL, Jl[0]);
+    pinocchio::getFrameJacobian(*model, *data, joint_index[9], pinocchio::LOCAL, Jl[1]);
+    dJl[0].setZero();
+    dJl[1].setZero();
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[4], pinocchio::LOCAL, dJl[0]);
+    pinocchio::getFrameJacobianTimeVariation(*model, *data, joint_index[9], pinocchio::LOCAL, dJl[1]);
     // std::cout <<"avp: " <<_dy->_avp[4].transpose() << std::endl;
 
     // std::cout << "djldq: " << qd.transpose() * dJl.transpose() << std::endl;
@@ -144,11 +158,33 @@ void State_DynamicTest::run()
     MatX A, b;
     A.setZero(25, 44);
     b.setZero(13, 1);
-    A.block(0, 0, 13, 25) = Qu.transpose() * (-H.transpose());
+    A.block(0, 0, 13, 25) = Qu.transpose() * (-H);
     A.block(0, 25, 25, 19) = Qu.transpose() * S.transpose();
-    b = Qu.transpose() * C_;
+    b = Qu.transpose() * C;
 
-    // tau = C_.tail(19);
+    MatX JF, dJF;
+    JF.setZero(5 * 2, 25);
+    JF.block(0, 0, 5, 25) = Jl[0].block(1, 0, 5, 25);
+    JF.block(5, 0, 5, 25) = Jl[1].block(1, 0, 5, 25);
+
+    dJF.setZero(5 * 2, 25);
+    dJF.block(0, 0, 5, 25) = dJl[0].block(1, 0, 5, 25);
+    dJF.block(5, 0, 5, 25) = dJl[1].block(1, 0, 5, 25);
+
+    A.setZero(5 * 2, 44);
+    b.setZero(5 * 2, 1);
+    A.block(0, 0, 5 * 2, 25) = JF;
+    b = -dJF * qd;
+
+    VecX qdd;
+    qdd.setOnes(25);
+
+    Eigen::Matrix<double,25,1>  my_tau =  my_H *qdd + my_C;
+    Eigen::Matrix<double, 25, 1> tau = H * qdd + C;
+
+    std::cout << "my tau: " << my_tau.transpose()<<std::endl;
+    std::cout << "pi tau: " << tau.transpose() << std::endl;
+    // tau = C.tail(19);
     // _lowCmd->setTau(tau);
     // _lowCmd->setQ(des_q);
 
