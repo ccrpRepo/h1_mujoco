@@ -289,8 +289,8 @@ void State_StepWalking::calcQQd()
     _qGoal.col(0) = q_des_l;
     _qGoal.col(1) = q_des_r;
 
-    Eigen::Matrix<double, 3, 5> Jl = _ctrlComp->_robot->leg_Jacobian(_qGoal.col(0), 0).block(3, 0, 3, 5);
-    Eigen::Matrix<double, 3, 5> Jr = _ctrlComp->_robot->leg_Jacobian(_qGoal.col(1), 1).block(3, 0, 3, 5);
+    Eigen::Matrix<double, 3, 5> Jl = _wbc->_J[0].block(0, 6, 3, 5);
+    Eigen::Matrix<double, 3, 5> Jr = _wbc->_J[1].block(0, 11, 3, 5);
 
     Eigen::Matrix<double, 5, 3> J_T;
     Eigen::Matrix<double, 3, 3> JJ_T;
@@ -307,6 +307,14 @@ void State_StepWalking::calcQQd()
     
     JJ_T_inv = JJ_T.inverse();
     _qdGoal.col(1) = J_T * JJ_T_inv * _velFeet2BGoal.col(1);
+    if((*_contact)(0) == 1)
+    {
+        _qdGoal.col(0).setZero();
+    }
+    else if ((*_contact)(1) == 1)
+    {
+        _qdGoal.col(1).setZero();
+    }
     if(_qdGoal.array().isNaN().any())
     {
         std::cout << "feetl: " << _posFeet2BGoal_ext_l.transpose() << std::endl;

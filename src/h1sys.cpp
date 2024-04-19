@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     ctrlComp->ctrlPlatform = ctrlPlat;
     ctrlComp->dt = 0.001; // run at 1000hz
     ctrlComp->running = &running;
-    ctrlComp->waveGen = new WaveGenerator(0.8, 0.5, Vec2(0, 0.5)); // Trot 0.45
+    ctrlComp->waveGen = new WaveGenerator(0.4, 0.5, Vec2(0, 0.5)); // Trot 0.45
     ctrlComp->geneObj();
     ControlFrame ctrlFrame(ctrlComp);
     while (running)

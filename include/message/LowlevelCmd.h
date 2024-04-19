@@ -223,7 +223,7 @@ struct LowlevelCmd
         motorCmd[legID * 5 + 0].Kd = 10; //10
         motorCmd[legID * 5 + 1].mode = 10;
         motorCmd[legID * 5 + 1].Kp = 40; //120
-        motorCmd[legID * 5 + 1].Kd = 10; //10
+        motorCmd[legID * 5 + 1].Kd = 20; //10
         motorCmd[legID * 5 + 2].mode = 10;
         motorCmd[legID * 5 + 2].Kp = 40; //80
         motorCmd[legID * 5 + 2].Kd = 10; //8
