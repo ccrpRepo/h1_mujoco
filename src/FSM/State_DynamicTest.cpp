@@ -22,7 +22,7 @@ void State_DynamicTest::enter()
 {
     if (_ctrlComp->ctrlPlatform == CtrlPlatform::MUJOCO)
     {
-        _lowCmd->setWholeSmallGain();
+        // _lowCmd->setWholeSmallGain();
         // _lowCmd->setWholeZeroGain();
     }
     else if (_ctrlComp->ctrlPlatform == CtrlPlatform::REALROBOT)
@@ -38,15 +38,21 @@ void State_DynamicTest::enter()
 
     for (int i = 0; i < 19; i++)
     {
-        _ctrlComp->_d->qpos[i] = des_q(i);
+        _ctrlComp->_d->qpos[i+7] = des_q(i);
     }
-    // _ctrlComp->_d->qpos[0] = 0;
-    // _ctrlComp->_d->qpos[1] = 0;
-    // _ctrlComp->_d->qpos[2] = 1;
+    
 }
 
 void State_DynamicTest::run()
 {
+    // _ctrlComp->_d->qpos[0] = 0;
+    // _ctrlComp->_d->qpos[1] = 0;
+    // _ctrlComp->_d->qpos[2] = 1.2;
+    // _ctrlComp->_d->qpos[3] = 1;
+    // _ctrlComp->_d->qpos[4] = 0;
+    // _ctrlComp->_d->qpos[5] = 0;
+    // _ctrlComp->_d->qpos[6] = 0;
+
     _ctrlComp->_robot->Update_Model();
 
     MatX Hfl,K,k;
@@ -54,18 +60,16 @@ void State_DynamicTest::run()
     MatX my_C = _dy->Cal_Generalize_Bias_force_Flt(true);
     K = _dy->Cal_K_Flt(k);
 
-    // Eigen::Matrix<double,25,1> my_C = _dy->Cal_Generalize_Bias_force_Flt(true);
-
     Eigen::VectorXd q(_ctrlComp->_pinody->_model->nq);
     Eigen::VectorXd qd(_ctrlComp->_pinody->_model->nv);
 
     q(0) = _dy->_quat_xyz[4]; // x
     q(1) = _dy->_quat_xyz[5]; // y
-    q(2) = 1;                 //_dy->_quat_xyz[6]; // z
-    q(3) = 1;                 //_dy->_quat_xyz[1]; // qua_x
-    q(4) = 0;                 //_dy->_quat_xyz[2]; // qua_y
-    q(5) = 0;                 //_dy->_quat_xyz[3]; // qua_z
-    q(6) = 0;                 //_dy->_quat_xyz[0]; // qua_w
+    q(2) = _dy->_quat_xyz[6]; // z
+    q(3) = _dy->_quat_xyz[1]; // qua_x
+    q(4) = _dy->_quat_xyz[2]; // qua_y
+    q(5) = _dy->_quat_xyz[3]; // qua_z
+    q(6) = _dy->_quat_xyz[0]; // qua_w
 
     qd(0) = _dy->_robot->_v_base[3]; // vx
     qd(1) = _dy->_robot->_v_base[4]; // vy
@@ -79,7 +83,7 @@ void State_DynamicTest::run()
         q(i+7) = _dy->_q[i];
         qd(i+6) = _dy->_dq[i];
     }
-    std::cout << "q: " << q.transpose() << std::endl;
+    // std::cout << "q: " << q.transpose() << std::endl;
     pinocchio::Model *model;
     pinocchio::Data *data;
     model = _ctrlComp->_pinody->_model;
@@ -90,6 +94,7 @@ void State_DynamicTest::run()
     pinocchio::computeJointJacobians(*(model), *(data));
     pinocchio::updateFramePlacements(*model, *data);
     pinocchio::nonLinearEffects(*(model),*(data),q,qd);
+    pinocchio::crba(*model, *data, q);
     pinocchio::computeJointJacobiansTimeVariation(*model, *data, q, qd);
 
     // std::cout<<q.transpose()<<std::endl;
@@ -150,11 +155,6 @@ void State_DynamicTest::run()
     Eigen::MatrixXd Q_init = qr.householderQ();
     Eigen::MatrixXd R_init = qr.matrixQR().triangularView<Eigen::Upper>();
 
-    std::cout << "Q_init: " << std::endl
-              << Q_init << std::endl;
-    std::cout << "R_init: " << std::endl
-              << R_init << std::endl;
-
     MatX Qc, Qu, R;
     Qc.setZero(25, 12);
     Qu.setZero(25, 13);
@@ -194,17 +194,12 @@ void State_DynamicTest::run()
 
     Mat4 T_foot2Base = T_flt.inverse() * T_lfoot;
 
-    std::cout
-        << "T_foot2Base: " << std::endl
-        << T_foot2Base << std::endl;
-
-    std::cout
-        << "T_flt: " << std::endl
-        << T_flt << std::endl;
-
-    // tau = C.tail(19);
-    // _lowCmd->setTau(tau);
-    _lowCmd->setQ(des_q);
+    Eigen::Matrix<double, 19, 1> tau;
+    // tau = my_C.block(6, 0, 19, 1);
+    // std::cout << "tau: " << tau.transpose() << std::endl;
+    tau = C.tail(19);
+    _lowCmd->setTau(tau);
+    // _lowCmd->setQ(des_q);
 
     // _ctrlComp->_d->qfrc_applied[1] = 1;
 }

@@ -116,7 +116,7 @@ void WBC::closure_constrain_task(VecInt2 contact)
     {
         if (contact(i))
         {
-            JF.block(row_index * 5, 0, 3, 25) = _J[i].block(0, 0, 5, 25);
+            JF.block(row_index * 5, 0, 3, 25) = _J[i].block(0, 0, 3, 25);
             JF.block(row_index * 5 + 3, 0, 2, 25) = _J[i].block(4, 0, 2, 25);
             dJF.block(row_index * 5, 0, 3, 25) = _dJ[i].block(0, 0, 3, 25);
             dJF.block(row_index * 5 + 3, 0, 2, 25) = _dJ[i].block(4, 0, 2, 25);
@@ -149,71 +149,45 @@ void WBC::desired_torso_motion_task(Vec2 ddr_xy)
     _eq_task[2] = new eq_Task(A, b, true);
 }
 
-// swing_acc only contain swing foot acceleration, which means
-// the swing cols of swing_acc must set zero when using this function
-// swing foot in base coordinate
+// swing_acc only contain swing foot acceleration, in global coordinate
 void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active)
 {
-    MatX A, b;
-    Vec3 swing_acc_in_suc;
+    Mat4 T_foot;
+    Mat3 R_foot;
     int swing_num = 0;
-    int swing_index = 0;
     for (int i = 0; i < 2; i++)
     {
-        if (contact(i) == 0)
+        if (!contact(i))
         {
-            swing_index = i;
             swing_num++;
+            T_foot = _pinody->_data->oMi[_pinody->joint_index[4 + 5 * i]];
         }
     }
-    if (swing_num == 0)
+    R_foot = T_foot.block(0, 0, 3, 3);
+    Vec3 swing_acc_foot = R_foot * swing_acc;
+
+    MatX Jsw3, dJsw3;
+    Jsw3.setZero(3 * swing_num, 25);
+    dJsw3.setZero(3 * swing_num, 25);
+
+    int row_index = 0;
+    for (int i = 0; i < 2; i++)
     {
-        _eq_task[3] = new eq_Task(false);
-        return;
+        if (!contact(i))
+        {
+            Jsw3.block(row_index * 5, 0, 3, 25) = _J[i].block(0, 0, 3, 25);
+            dJsw3.block(row_index * 5, 0, 3, 25) = _dJ[i].block(0, 0, 3, 25);
+            row_index++;
+        }
     }
-    A.setZero(swing_num * 5, 44);
-    b.setZero(swing_num * 5, 1);
 
-    Vec6 foot_twist_f; //coordinate: foot
-    foot_twist_f.setZero();
+    MatX A, b;
+    A.setZero(3 * swing_num, 44);
+    b.setZero(3 * swing_num, 1);
+    A.block(0, 0, 3 * swing_num, 25) = Jsw3;
+    b = swing_acc_foot - dJsw3 * _pinody->_qd;
 
-    /*************  求ry  ****************/
-    Mat4 T_foot;
-    Mat6 X_foot;
-    T_foot.setIdentity();
-    X_foot.setIdentity();
-    Eigen::Matrix<double, 10, 1> q_leg;
-    for (int i = 0; i < 10; i++)
-    {
-        q_leg(i) = _dy->_q[i];
-    }
-    for (int i = 0 + 5 * swing_index; i < 5 + 5 * swing_index; i++)
-    {
-        X_foot = X_foot * _dy->_robot->X_dwtree[i];
-        T_foot = T_foot * _dy->_robot->T_dwtree[i];
-    }
-   
-    foot_twist_f.tail(3) =  swing_acc;
-    Vec3 b_X_foot = T_foot.block(0, 0, 3, 1);
-    Vec3 b_Z_terrain = _dy->_robot->Flt_Transform().transpose().block(0, 2, 3, 1);
-    double xita = acos(b_X_foot.dot(b_Z_terrain) / b_X_foot.norm() * b_Z_terrain.norm());
-    foot_twist_f(1) = 0 * (M_PI / 2 - xita);
-    /*************************************/
-    /*************  求rz  ****************/
-    foot_twist_f(2) = 0 * (0 - q_leg(0 + swing_index * 5));
-    /*************************************/
-
-    Vec6 avp_foot2base = X_foot * _dy->_avp[4 + swing_index * 5];
-    Vec6 base_twist_f = X_foot * foot_twist_f;
-
-    MatX base_J_f = _dy->Cal_Geometric_Jacobain(4 + swing_index * 5, Coordiante::BASE);
-
-    
-    A.block(0, 6, 5, 19) = base_J_f.block(1, 0, 5, 19);
-    b = base_twist_f.tail(5) - avp_foot2base.tail(5);
-    // std::cout << "A: " << std::endl
-    //           << A << std::endl;
-    _eq_task[3] = new eq_Task(A, b, active);
+    _eq_task[3] = new eq_Task(A, b, true);
 }
 
 void WBC::body_yaw_height_task(double yaw_acc, double height_acc)

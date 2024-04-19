@@ -152,8 +152,8 @@ struct LowlevelCmd
         for (int i = 11; i < 19; i++)
         {
             motorCmd[i].mode = 10;
-            motorCmd[i].Kp = 20;
-            motorCmd[i].Kd = 2;
+            motorCmd[i].Kp = 80;
+            motorCmd[i].Kd = 10;
         }
     }
 
@@ -219,20 +219,20 @@ struct LowlevelCmd
     void setSwingGain(int legID)
     {
         motorCmd[legID * 5 + 0].mode = 10;
-        motorCmd[legID * 5 + 0].Kp = 3; //50
-        motorCmd[legID * 5 + 0].Kd = 0; //10
+        motorCmd[legID * 5 + 0].Kp = 40; //50
+        motorCmd[legID * 5 + 0].Kd = 10; //10
         motorCmd[legID * 5 + 1].mode = 10;
-        motorCmd[legID * 5 + 1].Kp = 3; //120
-        motorCmd[legID * 5 + 1].Kd = 0; //10
+        motorCmd[legID * 5 + 1].Kp = 80; //120
+        motorCmd[legID * 5 + 1].Kd = 10; //10
         motorCmd[legID * 5 + 2].mode = 10;
-        motorCmd[legID * 5 + 2].Kp = 2; //80
-        motorCmd[legID * 5 + 2].Kd = 0; //8
+        motorCmd[legID * 5 + 2].Kp = 40; //80
+        motorCmd[legID * 5 + 2].Kd = 10; //8
         motorCmd[legID * 5 + 3].mode = 10;
-        motorCmd[legID * 5 + 3].Kp = 3; //80
-        motorCmd[legID * 5 + 3].Kd = 0; //8
+        motorCmd[legID * 5 + 3].Kp = 40; //80
+        motorCmd[legID * 5 + 3].Kd = 10; //8
         motorCmd[legID * 5 + 4].mode = 10;
-        motorCmd[legID * 5 + 4].Kp = 3; //10
-        motorCmd[legID * 5 + 4].Kd = 0; //3
+        motorCmd[legID * 5 + 4].Kp = 20; //10
+        motorCmd[legID * 5 + 4].Kd = 5; //3
     }
 };
 

@@ -17,7 +17,7 @@ void State_BalanceStand::enter()
     _pcd = _est->getPosition();
     _Rd = _lowState->getRotMat();
     _posFeetGlobalInit = _est->getFeetPos();
-    _ctrlComp->setStartWave();
+    _ctrlComp->setAllStance();
     _ctrlComp->ioInter->zeroCmdPanel();
     
     _lowCmd->setSimStanceGain(0);
@@ -68,7 +68,7 @@ void State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
 
-    _wbc->set_contact_frition(0.05);
+    _wbc->set_contact_frition(0.4);
     Mat3 R_base = _ctrlComp->lowState->imu.getRotMat();
     Mat4 T_base;
     T_base.setIdentity(4, 4);
@@ -105,7 +105,7 @@ void State_BalanceStand::run()
     double roll_acc = 0, pitch_acc = 0;
     roll_acc = 50 * anglar_acc(0);
     // std::cout << "roll:" << anglar_acc(0) << std::endl;
-    pitch_acc =  150 * anglar_acc(1);
+    pitch_acc =  50 * anglar_acc(1);
     // std::cout << "pitch:" << anglar_acc(1) << std::endl;
     // std::cout << "anglar_acc: " << anglar_acc.transpose() << std::endl;
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
