@@ -96,6 +96,7 @@ void State_BalanceStand::run()
     // ddr_xy << 0, 0;
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec3 swing_acc;
+    swing_acc.setZero();
     _wbc->swing_foot_motion_task(swing_acc, contact, false);
     double yaw_acc = 0, height_acc = 0;
     height_acc = 50 * pos_err(2); // 20 * pos_err(2)
@@ -108,6 +109,19 @@ void State_BalanceStand::run()
     pitch_acc =  50 * anglar_acc(1);
     // std::cout << "pitch:" << anglar_acc(1) << std::endl;
     // std::cout << "anglar_acc: " << anglar_acc.transpose() << std::endl;
+    double swingyaw_acc = 0, swingpitch_acc = 0;
+    if ((*_contact)(0) == 0)
+    {
+        swingyaw_acc = -_ctrlComp->q[0];
+        swingpitch_acc = _q_des(4) - -_ctrlComp->q[4];
+    }
+    else if ((*_contact)(1) == 0)
+    {
+        swingyaw_acc = -_ctrlComp->q[5];
+        swingpitch_acc = _q_des(9) - -_ctrlComp->q[9];
+    }
+
+    _wbc->swingleg_yaw_pitch_task(*_contact, swingyaw_acc, swingpitch_acc, true);
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
     _wbc->torque_limit_task(contact, false);
     _wbc->friction_cone_task(contact);
@@ -119,7 +133,7 @@ void State_BalanceStand::run()
     // // tau.block(11, 0, 8, 1).setZero();
     // std::cout << "_tau: " << tau.transpose() << std::endl;
     // tau = _dy->Cal_Generalize_Bias_force_Flt(true).block(6, 0, 19, 1);
-    // std::cout << tau.transpo/se() << std::endl;
+    // std::cout << tau.transpose() << std::endl;
     _lowCmd->setTau(tau);
 
     _lowCmd->setQ(_q_des);

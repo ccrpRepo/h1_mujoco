@@ -22,7 +22,7 @@ void State_DynamicTest::enter()
 {
     if (_ctrlComp->ctrlPlatform == CtrlPlatform::MUJOCO)
     {
-        // _lowCmd->setWholeSmallGain();
+        _lowCmd->setWholeSmallGain();
         // _lowCmd->setWholeZeroGain();
     }
     else if (_ctrlComp->ctrlPlatform == CtrlPlatform::REALROBOT)
@@ -63,9 +63,9 @@ void State_DynamicTest::run()
     Eigen::VectorXd q(_ctrlComp->_pinody->_model->nq);
     Eigen::VectorXd qd(_ctrlComp->_pinody->_model->nv);
 
-    q(0) = _dy->_quat_xyz[4]; // x
-    q(1) = _dy->_quat_xyz[5]; // y
-    q(2) = _dy->_quat_xyz[6]; // z
+    q(0) = 0; //_dy->_quat_xyz[4];        // x
+    q(1) = 0; //_dy->_quat_xyz[5]; // y
+    q(2) = 0; //_dy->_quat_xyz[6]; // z
     q(3) = _dy->_quat_xyz[1]; // qua_x
     q(4) = _dy->_quat_xyz[2]; // qua_y
     q(5) = _dy->_quat_xyz[3]; // qua_z
@@ -187,19 +187,23 @@ void State_DynamicTest::run()
     VecX qdd;
     qdd.setOnes(25);
 
-    Mat4 T_lfoot = data->oMi[joint_index[4]];
-    Mat4 T_rfoot = data->oMi[joint_index[9]];
+    Mat4 T_0 = data->oMi[10];
+    Mat4 T_1 = data->oMi[11];
+    Mat4 T_rfoot = data->oMi[31];
     Mat4 T_Base2Wrd = data->oMi[pelvis_index];
     Mat4 T_flt = data->oMi[rootjoint_index];
-
-    Mat4 T_foot2Base = T_flt.inverse() * T_lfoot;
+    std::cout << "T_0: " << std::endl
+              << T_0 << std::endl;
+    std::cout << "T_1: " << std::endl
+              << T_1 << std::endl;
+    // Mat4 T_foot2Base = T_flt.inverse() * T_lfoot;
 
     Eigen::Matrix<double, 19, 1> tau;
     // tau = my_C.block(6, 0, 19, 1);
     // std::cout << "tau: " << tau.transpose() << std::endl;
     tau = C.tail(19);
-    _lowCmd->setTau(tau);
-    // _lowCmd->setQ(des_q);
+    // _lowCmd->setTau(tau);
+    _lowCmd->setQ(des_q);
 
     // _ctrlComp->_d->qfrc_applied[1] = 1;
 }

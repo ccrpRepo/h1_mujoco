@@ -46,6 +46,9 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
     pinocchio::crba(*model, *data, _pinody->_q);
     pinocchio::computeJointJacobiansTimeVariation(*model, *data, _pinody->_q, _pinody->_qd);
 
+    _T_foot[0] = data->oMi[6];
+    _T_foot[1] = data->oMi[11];
+
     _H.setZero();
     _H = data->M;
     _C.setZero();
@@ -152,19 +155,32 @@ void WBC::desired_torso_motion_task(Vec2 ddr_xy)
 // swing_acc only contain swing foot acceleration, in global coordinate
 void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active)
 {
-    Mat4 T_foot;
+    // MatX A, b;
+    // A.setZero(5, 44);
+    // b.setZero(5, 1);
+    // if(contact(0) == 0)
+    // {
+    //     A.block(6, 6, 5, 5).setIdentity(5, 5);
+    // }
+    // if (contact(1) == 0)
+    // {
+    //     A.block(11, 11, 5, 5).setIdentity(5, 5);
+    // }
+    // b = swingleg_qd;
+    // _eq_task[3] = new eq_Task(A, b, true);
     Mat3 R_foot;
     int swing_num = 0;
+
     for (int i = 0; i < 2; i++)
     {
         if (!contact(i))
         {
             swing_num++;
-            T_foot = _pinody->_data->oMi[_pinody->joint_index[4 + 5 * i]];
+            R_foot = _T_foot[i].block(0, 0, 3, 3);
         }
     }
-    R_foot = T_foot.block(0, 0, 3, 3);
-    Vec3 swing_acc_foot = R_foot * swing_acc;
+
+    Vec3 swing_acc_foot = R_foot.transpose() * swing_acc;
 
     MatX Jsw3, dJsw3;
     Jsw3.setZero(3 * swing_num, 25);
@@ -175,12 +191,11 @@ void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active)
     {
         if (!contact(i))
         {
-            Jsw3.block(row_index * 5, 0, 3, 25) = _J[i].block(0, 0, 3, 25);
-            dJsw3.block(row_index * 5, 0, 3, 25) = _dJ[i].block(0, 0, 3, 25);
+            Jsw3.block(row_index * 3, 0, 3, 25) = _J[i].block(0, 0, 3, 25);
+            dJsw3.block(row_index * 3, 0, 3, 25) = _dJ[i].block(0, 0, 3, 25);
             row_index++;
         }
     }
-
     MatX A, b;
     A.setZero(3 * swing_num, 44);
     b.setZero(3 * swing_num, 1);
@@ -200,7 +215,7 @@ void WBC::body_yaw_height_task(double yaw_acc, double height_acc)
     A.block(0, 0, 2, 25) = _I_yaw_height;
     b = yaw_height;
 
-    _eq_task[5] = new eq_Task(A, b, true);
+    _eq_task[4] = new eq_Task(A, b, true);
 }
 
 void WBC::body_roll_pitch_task(double roll_acc, double pitch_acc)
@@ -213,30 +228,40 @@ void WBC::body_roll_pitch_task(double roll_acc, double pitch_acc)
     A.block(0, 0, 2, 25) = _I_roll_pitch;
     b = roll_pitch;
 
-    _eq_task[4] = new eq_Task(A, b, true);
+    _eq_task[5] = new eq_Task(A, b, true);
 }
+
+void WBC::swingleg_yaw_pitch_task(VecInt2 contact, double legyaw_acc, double legpitch_acc, bool active)
+{
+    Eigen::Matrix<double, 2, 44> A;
+    Eigen::Matrix<double, 2, 1> b;
+    A.setZero();
+    if (contact(0) == 0)
+    {
+        A.row(0)(6) = 1;
+        A.row(1)(10) = 1;
+    }
+    else if (contact(1) == 0)
+    {
+        A.row(0)(11) = 1;
+        A.row(1)(15) = 1;
+    }
+
+    b(0) = legyaw_acc;
+    b(1) = legpitch_acc;
+
+    _eq_task[6] = new eq_Task(A, b, active);
+}
+
 
 void WBC::torque_limit_task(VecInt2 contact, bool active)
 {
     MatX A, b;
-    A.setZero(44, 44);
-    b.setZero(44, 1);
-    Eigen::Matrix<double, 5, 5> I5;
-    I5.setIdentity();
-    // if (contact(0) == 0)
-    // {
-    //     A.block(25, 25, 5, 5) = I5;
-    // }
-    // else if (contact(1) == 0)
-    // {
-    //     A.block(30, 30, 5, 5) = I5;
-    // }
-    // else
-    // {
-        A.block(25, 25, 19, 19) = _I_torque;
-    // }
+    A.setZero(19, 44);
+    b.setZero(19, 1);
+    A.block(0, 25, 19, 19) = _I_torque;
 
-    _eq_task[6] = new eq_Task(A, b, active);
+    _eq_task[7] = new eq_Task(A, b, active);
 }
 
 // contact is the contact situation of foots   1: contact; 0: swing
@@ -308,8 +333,8 @@ void WBC::set_contact_frition(double fri)
     _frition = fri;
     _Ffri << 1, 0, 0, 0, 0,
         -1, 0, 0, 0, 0,
-        0, 1, 0, 0, -_frition,
-        0, -1, 0, 0, -_frition,
+        0, 1, 0, 0, 0,
+        0, -1, 0, 0, 0,
         0, 0, -1, 0, -_frition,
         0, 0, 1, 0, -_frition,
         0, 0, 0, -1, -_frition,
@@ -451,7 +476,7 @@ void WBC::solve_HOproblem()
     d_bar.setZero(44, 1);
     b_bar.setZero(44, 1);
     int maxtask = -1;
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < 8; i++)
     {
         if (_eq_task[i]->_active != true)
         {

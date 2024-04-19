@@ -74,15 +74,15 @@ public:
         _frition = 0.35;
         _Ffri << 1,  0,  0,  0,  0,
                 -1,  0,  0,  0,  0,
-                 0,  1,  0,  0, -_frition,
-                 0, -1,  0,  0, -_frition,
+                 0,  1,  0,  0,  0,
+                 0, -1,  0,  0,  0,
                  0,  0, -1,  0, -_frition,
                  0,  0,  1,  0, -_frition,
                  0,  0,  0, -1, -_frition,
                  0,  0,  0,  1, -_frition,
                  0,  0,  0,  0, -1;
 
-        _fri_beta << 50, 50, 0, 0, 0, 0, 0, 0, 0;
+        _fri_beta << 50, 50, 30, 30, 0, 0, 0, 0, 0;
 
         _min_ident.setIdentity(44, 44);
         _min_ident = _min_ident * 0.001;
@@ -105,7 +105,7 @@ public:
     }
 
     Dynamics *_dy;
-    eq_Task *_eq_task[7];
+    eq_Task *_eq_task[10];
     ineq_Task *_ineq_task;
     MatX _H, _H_fl, _C, _K, _k, _S, _G, _I_xy, _J_swingfoot, _I_yaw_height, _I_roll_pitch, _I_torque;
     MatX _g;
@@ -131,6 +131,7 @@ public:
     Eigen::Matrix<double, 6, 25> _dJ[2];
     MatX _Qc, _Qu, _R;
     Eigen::Matrix<double, 5, 5> _S_525;
+    Mat4 _T_foot[2];
 
     void dynamics_consistence_task(VecInt2 contact);
     void closure_constrain_task(VecInt2 contact);
@@ -138,6 +139,7 @@ public:
     void swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active);
     void body_yaw_height_task(double yaw_acc, double height_acc);
     void body_roll_pitch_task(double roll_acc, double pitch_acc);
+    void swingleg_yaw_pitch_task(VecInt2 contact, double legyaw_acc, double legpitch_acc, bool active);
     void torque_limit_task(VecInt2 contact, bool active);
     void friction_cone_task(VecInt2 contact);
 

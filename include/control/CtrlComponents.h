@@ -25,7 +25,7 @@ public:
         _m = m;
         _robot = dy->_robot;
         _pinody = pinody;
-        _wbc = new WBC(dy_,_pinody);
+        _wbc = new WBC(dy_, pinody);
         lowCmd = new LowlevelCmd();
         lowState = new LowlevelState();
         contact = new VecInt2;

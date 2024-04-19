@@ -40,7 +40,7 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
     {
         if ((*_contact)(i) == 1)
         {
-            if ((*_phase)(i) < 0.01)
+            if ((*_phase)(i) < 0.5)
             {
                 _startP.col(i) = _est->getFootPos(i);
             }

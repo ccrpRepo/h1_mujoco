@@ -19,6 +19,7 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
     _Kdw = Vec3(50, 50, 50).asDiagonal();
     _KpSwing = Vec3(40, 40, 40).asDiagonal();
     _KdSwing = Vec3(10, 10, 10).asDiagonal();
+    _KdSwing.setZero();
     _vxLim = _robot->getRobVelLimitX();
     _vyLim = _robot->getRobVelLimitY();
     _wyawLim = _robot->getRobVelLimitYaw();
@@ -47,7 +48,7 @@ void State_StepWalking::run()
 {
     // _ctrlComp->setAllStance();
     _ctrlComp->_robot->Update_Model();
-    _wbc->set_contact_frition(0.45);
+    _wbc->set_contact_frition(0.25);
     _posBody = _est->getPosition();
     _velBody = _est->getVelocity();
     _posFeet2BGlobal = _est->getPosFeet2BGlobal();
@@ -107,9 +108,23 @@ void State_StepWalking::run()
         std::cout << "qd_des meets NaN" << std::endl;
     }
     _tau.block(10, 0, 9, 1).setZero();
-    // std::cout << "_tau: " << _tau.transpose() << std::endl;
+
+    // if((*_contact)(0)==0)
+    // {
+    //     _tau.block(0, 0, 5, 1) = _wbc->_C.block(6, 0, 5, 1);
+    // }
+    // if ((*_contact)(1) == 0)
+    // {
+    //     _tau.block(5, 0, 5, 1) = _wbc->_C.block(11, 0, 5, 1);
+    // }
+
+    // _tau(0) = 0;
+    // _tau(5) = 0;
+    // _qd_des(0) = 0;
+    // _qd_des(5) = 0;
     // _tau.setZero();
     // _tau = _wbc->_g;
+    
     _lowCmd->setTau(_tau);
     _lowCmd->setQ(_q_des);
     _lowCmd->setQd(_qd_des);
@@ -120,50 +135,40 @@ void State_StepWalking::run()
         if ((*_contact)(i) == 0)
         {
             _lowCmd->setSwingGain(i);
+            // _lowCmd->setZeroGain(i);
+            // _lowCmd->setSimStanceGain(i);
             _lowCmd->setArmGain();
             _lowCmd->setTorsoGain();
         }
         else
         {
-            // _lowCmd->setSwingGain(i);
             _lowCmd->setSimStanceGain(i);
             _lowCmd->setArmGain();
             _lowCmd->setTorsoGain();
         }
     }
+    // _lowCmd->setWholeZeroGain();
 
-    // if ((*_contact)(0) == 0)
-    // {
-    //     _ctrlComp->_d->qpos[0 + 7] = _q_des(0);
-    //     _ctrlComp->_d->qpos[1 + 7] = _q_des(1);
-    //     _ctrlComp->_d->qpos[2 + 7] = _q_des(2);
-    //     _ctrlComp->_d->qpos[3 + 7] = _q_des(3);
-    //     _ctrlComp->_d->qpos[4 + 7] = _q_des(4);
-    // }
-    // if ((*_contact)(1) == 0)
-    // {
-    //     _ctrlComp->_d->qpos[5 + 7] = _q_des(5);
-    //     _ctrlComp->_d->qpos[6 + 7] = _q_des(6);
-    //     _ctrlComp->_d->qpos[7 + 7] = _q_des(7);
-    //     _ctrlComp->_d->qpos[8 + 7] = _q_des(8);
-    //     _ctrlComp->_d->qpos[9 + 7] = _q_des(9);
-    // }
-    // if ((*_contact)(0) == 0)
-    // {
-    //     _ctrlComp->_d->qvel[0 + 7] = _qd_des(0);
-    //     _ctrlComp->_d->qvel[1 + 7] = _qd_des(1);
-    //     _ctrlComp->_d->qvel[2 + 7] = _qd_des(2);
-    //     _ctrlComp->_d->qvel[3 + 7] = _qd_des(3);
-    //     _ctrlComp->_d->qvel[4 + 7] = _qd_des(4);
-    // }
-    // if ((*_contact)(1) == 0)
-    // {
-    //     _ctrlComp->_d->qvel[5 + 7] = _qd_des(5);
-    //     _ctrlComp->_d->qvel[6 + 7] = _qd_des(6);
-    //     _ctrlComp->_d->qvel[7 + 7] = _qd_des(7);
-    //     _ctrlComp->_d->qvel[8 + 7] = _qd_des(8);
-    //     _ctrlComp->_d->qvel[9 + 7] = _qd_des(9);
-    // }
+    if(true)
+    {
+        if ((*_contact)(0) == 0)
+        {
+            // _ctrlComp->_d->qpos[7 + 0] = _q_des(0);
+            // _ctrlComp->_d->qpos[7 + 1] = _q_des(1);
+            _ctrlComp->_d->qpos[7 + 2] = _q_des(2);
+            _ctrlComp->_d->qpos[7 + 3] = _q_des(3);
+            // _ctrlComp->_d->qpos[7 + 4] = _q_des(4);
+        }
+        if ((*_contact)(1) == 0)
+        {
+            // _ctrlComp->_d->qpos[7 + 5] = _q_des(5);
+            // _ctrlComp->_d->qpos[7 + 6] = _q_des(6);
+            _ctrlComp->_d->qpos[7 + 7] = _q_des(7);
+            _ctrlComp->_d->qpos[7 + 8] = _q_des(8);
+            // _ctrlComp->_d->qpos[7 + 9] = _q_des(9);
+        }
+    }
+    
 }
 
 bool State_StepWalking::checkStepOrNot()
@@ -344,29 +349,69 @@ void State_StepWalking::calcTau()
     _wbc->dynamics_consistence_task(*_contact);
     _wbc->closure_constrain_task(*_contact);
     Vec2 ddr_xy;
-    ddr_xy <<  10 * ddp_base(0), 10 * ddp_base(1);
+    ddr_xy <<  15 * ddp_base(0), 15 * ddp_base(1);
     // ddr_xy.setZero();
     _wbc->desired_torso_motion_task(ddr_xy);
     Vec32 swingforceFeetBase = _G2B_RotMat * _forceFeetGlobal;
     Vec3 swingacc;
     swingacc.setZero();
-    for (int i = 0; i < 2;i++)
+    if((*_contact)(0) == 0)
     {
-        if((*_contact)(i == 0))
-        {
-            swingacc = _forceFeetGlobal.col(i);
-        }
+        swingacc = _forceFeetGlobal.col(0);
     }
-
+    else if ((*_contact)(1) == 0)
+    {
+        swingacc = _forceFeetGlobal.col(1);
+    }
+    swingacc = 50 * swingacc;
+    // swingacc.setZero();
+    // Vec5 swingleg_qdd;
+    // swingleg_qdd.setZero();
+    // Vec5 swingleg_q_des, swingleg_qd_des, swingleg_q_cur, swingleg_qd_cur;
+    // for (int i = 0; i < 5;i++)
+    // {
+    //     if ((*_contact)(0) == 0)
+    //     {
+    //         swingleg_q_cur(i) = _ctrlComp->q[i];
+    //         swingleg_qd_cur(i) = _ctrlComp->qd[i];
+    //     }
+    //     else if ((*_contact)(1) == 0)
+    //     {
+    //         swingleg_q_cur(i) = _ctrlComp->q[i + 5];
+    //         swingleg_qd_cur(i) = _ctrlComp->qd[i + 5];
+    //     }
+    // }
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     if ((*_contact)(i) == 0)
+    //     {
+    //         swingleg_q_des = 50 * (_q_des.block(5*i, 0, 5, 1) - swingleg_q_cur);
+    //     }
+    // }
+    // swingleg_qdd = swingleg_q_des;
+    // swingleg_qdd.setZero(); //~~~~~~~~~~~~~~~~~~~
     _wbc->swing_foot_motion_task(swingacc, *_contact, true);
-    double yaw_acc = 10 * dw_base(2); 
+    double yaw_acc = 20 * dw_base(2); 
     double height_acc =  10 * ddp_base(2);
     // std::cout << "height_acc: " << height_acc << std::endl;
     // height_acc = 100;
     _wbc->body_yaw_height_task(yaw_acc, height_acc);
     double roll_acc =  10 * dw_base(0);  //
-    double pitch_acc = 1 * dw_base(1); //
+    double pitch_acc = 5 * dw_base(1); //
     _wbc->body_roll_pitch_task(roll_acc, pitch_acc);
+    double swingyaw_acc = 0, swingpitch_acc = 0;
+    if ((*_contact)(0) == 0)
+    {
+        swingyaw_acc = 40 * -_ctrlComp->q[0];
+        swingpitch_acc = _q_des(4) - _ctrlComp->q[4];
+    }
+    else if ((*_contact)(1) == 0)
+    {
+        swingyaw_acc = 40 * (-_ctrlComp->q[5]);
+        swingpitch_acc = _q_des(9) - _ctrlComp->q[9];
+    }
+
+    _wbc->swingleg_yaw_pitch_task(*_contact, swingyaw_acc, swingpitch_acc, true);
     _wbc->torque_limit_task(*_contact, true);
     _wbc->friction_cone_task(*_contact);
     _wbc->solve_HOproblem();
