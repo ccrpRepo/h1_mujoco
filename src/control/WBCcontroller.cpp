@@ -155,19 +155,6 @@ void WBC::desired_torso_motion_task(Vec2 ddr_xy)
 // swing_acc only contain swing foot acceleration, in global coordinate
 void WBC::swing_foot_motion_task(Vec3 swing_acc, VecInt2 contact, bool active)
 {
-    // MatX A, b;
-    // A.setZero(5, 44);
-    // b.setZero(5, 1);
-    // if(contact(0) == 0)
-    // {
-    //     A.block(6, 6, 5, 5).setIdentity(5, 5);
-    // }
-    // if (contact(1) == 0)
-    // {
-    //     A.block(11, 11, 5, 5).setIdentity(5, 5);
-    // }
-    // b = swingleg_qd;
-    // _eq_task[3] = new eq_Task(A, b, true);
     Mat3 R_foot;
     int swing_num = 0;
 

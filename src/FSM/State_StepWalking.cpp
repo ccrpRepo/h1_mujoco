@@ -15,10 +15,10 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
 
     _Kpp = Vec3(80, 50, 80).asDiagonal(); //xyz
     _Kdp = Vec3(20, 20, 20).asDiagonal(); //d xyz
-    _kpw = Vec3(300, 200, 200).asDiagonal(); // rotate
-    _Kdw = Vec3(50, 50, 50).asDiagonal(); //d rotate
-    _KpSwing = Vec3(3, 3, 3).asDiagonal();
-    _KdSwing = Vec3(0.1, 0.1, 0.1).asDiagonal();
+    _kpw = Vec3(500, 300, 200).asDiagonal(); // rotate
+    _Kdw = Vec3(50, 150, 50).asDiagonal(); //d rotate
+    _KpSwing = Vec3(50, 50, 50).asDiagonal(); // 3 3 3
+    _KdSwing = Vec3(10, 10, 10).asDiagonal();// 0.1 0.1 0.1
     // _KpSwing.setZero();
     // _KdSwing.setZero();
     _vxLim = _robot->getRobVelLimitX();
@@ -121,6 +121,7 @@ void State_StepWalking::run()
         if ((*_contact)(i) == 0)
         {
             _lowCmd->setSwingGain(i);
+            // _lowCmd->setZeroGain(i);
             _lowCmd->setArmGain();
             _lowCmd->setTorsoGain();
         }
@@ -320,8 +321,8 @@ void State_StepWalking::calcQQd()
     xita[0] = acos(norm_terrain.dot(calf_xaxis[0]) / norm_terrain.norm() * calf_xaxis[0].norm());
     xita[1] = acos(norm_terrain.dot(calf_xaxis[1]) / norm_terrain.norm() * calf_xaxis[1].norm());
 
-    v_foot[0](3) = 0.1 * (M_PI / 2 - xita[0]);
-    v_foot[1](3) = 0.1 * (M_PI / 2 - xita[1]);
+    v_foot[0](3) = 10 * (M_PI / 2 - xita[0]);
+    v_foot[1](3) = 10 * (M_PI / 2 - xita[1]);
     //******** rz *****************
     double yaw_cur[2];
     yaw_cur[0] = _ctrlComp->q[0];
@@ -416,14 +417,14 @@ void State_StepWalking::calcTau()
     _dWbd(0) = saturation(_dWbd(0), Vec2(-40, 40));
     _dWbd(1) = saturation(_dWbd(1), Vec2(-40, 40));
     _dWbd(2) = saturation(_dWbd(2), Vec2(-10, 10));
-
+    std::cout << "phase: " << (*_phase)(0)<<"|    ";
     _forceFeetGlobal.setZero();
     for (int i(0); i < 2; ++i)
     {
         if ((*_contact)(i) == 0)
         {
             _forceFeetGlobal.col(i) = _KpSwing * (_posFeetGlobalGoal.col(i) - _posFeetGlobal.col(i)) + _KdSwing * (_velFeetGlobalGoal.col(i) - _velFeetGlobal.col(i));
-            // std::cout << "err   " << _posFeetGlobalGoal.col(i).transpose() << std::endl;
+            // std::cout << "vel   " << _velFeetGlobalGoal.col(i).transpose() << std::endl;
         }
     }
 
@@ -447,7 +448,9 @@ void State_StepWalking::calcTau()
     {
         swingacc = _forceFeetGlobal.col(1);
     }
-    swingacc = 50 * swingacc;
+    
+    
+    // std::cout << "swingacc: " << swingacc.transpose() << std::endl;
     _wbc->swing_foot_motion_task(swingacc, *_contact, true);
     double yaw_acc = dw_base(2); 
     double height_acc =  ddp_base(2);
@@ -469,7 +472,7 @@ void State_StepWalking::calcTau()
         swingpitch_acc = _q_des(9) - _ctrlComp->q[9];
     }
 
-    _wbc->swingleg_yaw_pitch_task(*_contact, swingyaw_acc, swingpitch_acc, true);
+    _wbc->swingleg_yaw_pitch_task(*_contact, swingyaw_acc, swingpitch_acc, false);
     _wbc->torque_limit_task(*_contact, true);
     _wbc->friction_cone_task(*_contact);
     _wbc->solve_HOproblem();
