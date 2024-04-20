@@ -14,11 +14,11 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
     _gaitHeight = 0.30;
 
     _Kpp = Vec3(80, 50, 80).asDiagonal(); //xyz
-    _Kdp = Vec3(20, 20, 20).asDiagonal(); //d xyz
-    _kpw = Vec3(500, 300, 200).asDiagonal(); // rotate
-    _Kdw = Vec3(50, 150, 50).asDiagonal(); //d rotate
-    _KpSwing = Vec3(50, 50, 50).asDiagonal(); // 3 3 3
-    _KdSwing = Vec3(10, 10, 10).asDiagonal();// 0.1 0.1 0.1
+    _Kdp = Vec3(20, 20, 50).asDiagonal(); //d xyz
+    _kpw = Vec3(350, 400, 50).asDiagonal(); // rotate
+    _Kdw = Vec3(100, 100, 50).asDiagonal(); //d rotate
+    _KpSwing = Vec3(50, 50, 50).asDiagonal(); // 
+    _KdSwing = Vec3(10, 10, 10).asDiagonal();// 
     // _KpSwing.setZero();
     // _KdSwing.setZero();
     _vxLim = _robot->getRobVelLimitX();
@@ -49,7 +49,7 @@ void State_StepWalking::run()
 {
     // _ctrlComp->setAllStance();
     _ctrlComp->_robot->Update_Model();
-    _wbc->set_contact_frition(0.95);
+    _wbc->set_contact_frition(0.35);
     _posBody = _est->getPosition();
     _velBody = _est->getVelocity();
     _posFeet2BGlobal = _est->getPosFeet2BGlobal();
@@ -410,14 +410,14 @@ void State_StepWalking::calcTau()
     _ddPcd = _Kpp * _posError + _Kdp * _velError;
     _dWbd = _kpw * rotMatToExp(_Rd * _G2B_RotMat) + _Kdw * (_wCmdGlobal - _lowState->getGyroGlobal());
 
-    _ddPcd(0) = saturation(_ddPcd(0), Vec2(-3, 3));
-    _ddPcd(1) = saturation(_ddPcd(1), Vec2(-3, 3));
-    _ddPcd(2) = saturation(_ddPcd(2), Vec2(-5, 5));
+    // _ddPcd(0) = saturation(_ddPcd(0), Vec2(-3, 3));
+    // _ddPcd(1) = saturation(_ddPcd(1), Vec2(-3, 3));
+    // _ddPcd(2) = saturation(_ddPcd(2), Vec2(-5, 5));
 
-    _dWbd(0) = saturation(_dWbd(0), Vec2(-40, 40));
-    _dWbd(1) = saturation(_dWbd(1), Vec2(-40, 40));
-    _dWbd(2) = saturation(_dWbd(2), Vec2(-10, 10));
-    std::cout << "phase: " << (*_phase)(0)<<"|    ";
+    // _dWbd(0) = saturation(_dWbd(0), Vec2(-40, 40));
+    // _dWbd(1) = saturation(_dWbd(1), Vec2(-40, 40));
+    // _dWbd(2) = saturation(_dWbd(2), Vec2(-10, 10));
+    // std::cout << "phase: " << (*_phase)(0)<<"|    ";
     _forceFeetGlobal.setZero();
     for (int i(0); i < 2; ++i)
     {

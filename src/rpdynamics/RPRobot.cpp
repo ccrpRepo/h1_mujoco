@@ -930,7 +930,7 @@ Vec32 h1Robot::getFeetPosIdeal()
     Vec32 footEndIdea;
 
     footEndIdea << 0.0395 - 0.09,  0.0395 - 0.09,
-                   0.2029 -0.05, -0.2029 + 0.05, 
+                   0.2029 , -0.2029 , 
                   -0.9110, -0.9110;
 
     return footEndIdea;
