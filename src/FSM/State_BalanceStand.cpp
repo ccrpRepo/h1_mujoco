@@ -64,7 +64,45 @@ void State_BalanceStand::enter()
     _init_R_base = init_R;
 }
 
-void State_BalanceStand::run()
+void State_BalanceStand::pin_init()
+{
+    _wbc->_pinody->_q.setZero(_wbc->_pinody->_model->nq);
+    _wbc->_pinody->_qd.setZero(_wbc->_pinody->_model->nv);
+    _wbc->_pinody->_q(0) = _dy->_quat_xyz[4]; // x
+    _wbc->_pinody->_q(1) = _dy->_quat_xyz[5]; // y
+    _wbc->_pinody->_q(2) = _dy->_quat_xyz[6]; // z
+    _wbc->_pinody->_q(3) = _dy->_quat_xyz[1]; // qua_x
+    _wbc->_pinody->_q(4) = _dy->_quat_xyz[2]; // qua_y
+    _wbc->_pinody->_q(5) = _dy->_quat_xyz[3]; // qua_z
+    _wbc->_pinody->_q(6) = _dy->_quat_xyz[0]; // qua_w
+
+    _wbc->_pinody->_qd(0) = _dy->_robot->_v_base[3]; // vx
+    _wbc->_pinody->_qd(1) = _dy->_robot->_v_base[4]; // vy
+    _wbc->_pinody->_qd(2) = _dy->_robot->_v_base[5]; // vz
+    _wbc->_pinody->_qd(3) = _dy->_robot->_v_base[0]; // wx
+    _wbc->_pinody->_qd(4) = _dy->_robot->_v_base[1]; // wy
+    _wbc->_pinody->_qd(5) = _dy->_robot->_v_base[2]; // wz
+    for (int i = 0; i < 19; i++)
+    {
+        _wbc->_pinody->_q(i + 7) = _dy->_q[i];
+        _wbc->_pinody->_qd(i + 6) = _dy->_dq[i];
+    }
+
+    pinocchio::Model *model;
+    pinocchio::Data *data;
+    model = _wbc->_pinody->_model;
+    data = _wbc->_pinody->_data;
+
+    pinocchio::forwardKinematics(*(model), *(data), _wbc->_pinody->_q, _wbc->_pinody->_qd);
+    pinocchio::framesForwardKinematics(*model, *data, _wbc->_pinody->_q);
+    pinocchio::computeJointJacobians(*(model), *(data));
+    pinocchio::updateFramePlacements(*model, *data);
+    pinocchio::nonLinearEffects(*(model), *(data), _wbc->_pinody->_q, _wbc->_pinody->_qd);
+    pinocchio::crba(*model, *data, _wbc->_pinody->_q);
+    pinocchio::computeJointJacobiansTimeVariation(*model, *data, _wbc->_pinody->_q, _wbc->_pinody->_qd);
+}
+
+void  State_BalanceStand::run()
 {
     _ctrlComp->_robot->Update_Model();
 
@@ -83,6 +121,7 @@ void State_BalanceStand::run()
     Vec3 base_pos = _ctrlComp->estimator->getPosition();
     VecInt2 contact;
     contact << 1, 1;
+    pin_init();
     _wbc->dynamics_consistence_task(contact);
     _wbc->closure_constrain_task(contact);
     // _init_pos(2) = 0.7;
@@ -113,12 +152,12 @@ void State_BalanceStand::run()
     if ((*_contact)(0) == 0)
     {
         swingyaw_acc = -_ctrlComp->q[0];
-        swingpitch_acc = _q_des(4) - -_ctrlComp->q[4];
+        swingpitch_acc = _q_des(4) -_ctrlComp->q[4];
     }
     else if ((*_contact)(1) == 0)
     {
         swingyaw_acc = -_ctrlComp->q[5];
-        swingpitch_acc = _q_des(9) - -_ctrlComp->q[9];
+        swingpitch_acc = _q_des(9) -_ctrlComp->q[9];
     }
 
     _wbc->swingleg_yaw_pitch_task(*_contact, swingyaw_acc, swingpitch_acc, true);

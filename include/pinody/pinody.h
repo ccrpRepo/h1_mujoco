@@ -31,6 +31,9 @@ public:
         joint_index[16] = model->getFrameId("right_shoulder_roll_joint");
         joint_index[17] = model->getFrameId("right_shoulder_yaw_joint");
         joint_index[18] = model->getFrameId("right_elbow_joint");
+
+        pelvis_index = model->getFrameId("pelvis");
+        rootjoint_index = model->getFrameId("root_joint");
     }
 
     ~Pinody(){}
@@ -41,7 +44,8 @@ public:
     Eigen::VectorXd _qd;
 
     int joint_index[19] = {0};
-    
+    int pelvis_index;
+    int rootjoint_index;
 
 private: 
 };

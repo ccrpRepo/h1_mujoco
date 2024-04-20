@@ -11,40 +11,40 @@ void WBC::dynamics_consistence_task(VecInt2 contact)
             contact_num++;
     }
     Js.setZero(contact_num * 5, 25);
-    _pinody->_q.setZero(_pinody->_model->nq);
-    _pinody->_qd.setZero(_pinody->_model->nv);
-    _pinody->_q(0) = _dy->_quat_xyz[4]; // x
-    _pinody->_q(1) = _dy->_quat_xyz[5]; // y
-    _pinody->_q(2) = _dy->_quat_xyz[6]; // z
-    _pinody->_q(3) = _dy->_quat_xyz[1]; // qua_x
-    _pinody->_q(4) = _dy->_quat_xyz[2]; // qua_y
-    _pinody->_q(5) = _dy->_quat_xyz[3]; // qua_z
-    _pinody->_q(6) = _dy->_quat_xyz[0]; // qua_w
+    // _pinody->_q.setZero(_pinody->_model->nq);
+    // _pinody->_qd.setZero(_pinody->_model->nv);
+    // _pinody->_q(0) = _dy->_quat_xyz[4]; // x
+    // _pinody->_q(1) = _dy->_quat_xyz[5]; // y
+    // _pinody->_q(2) = _dy->_quat_xyz[6]; // z
+    // _pinody->_q(3) = _dy->_quat_xyz[1]; // qua_x
+    // _pinody->_q(4) = _dy->_quat_xyz[2]; // qua_y
+    // _pinody->_q(5) = _dy->_quat_xyz[3]; // qua_z
+    // _pinody->_q(6) = _dy->_quat_xyz[0]; // qua_w
 
-    _pinody->_qd(0) = _dy->_robot->_v_base[3]; // vx
-    _pinody->_qd(1) = _dy->_robot->_v_base[4]; // vy
-    _pinody->_qd(2) = _dy->_robot->_v_base[5]; // vz
-    _pinody->_qd(3) = _dy->_robot->_v_base[0]; // wx
-    _pinody->_qd(4) = _dy->_robot->_v_base[1]; // wy
-    _pinody->_qd(5) = _dy->_robot->_v_base[2]; // wz
-    for (int i = 0; i < 19; i++)
-    {
-        _pinody->_q(i + 7) = _dy->_q[i];
-        _pinody->_qd(i + 6) = _dy->_dq[i];
-    }
+    // _pinody->_qd(0) = _dy->_robot->_v_base[3]; // vx
+    // _pinody->_qd(1) = _dy->_robot->_v_base[4]; // vy
+    // _pinody->_qd(2) = _dy->_robot->_v_base[5]; // vz
+    // _pinody->_qd(3) = _dy->_robot->_v_base[0]; // wx
+    // _pinody->_qd(4) = _dy->_robot->_v_base[1]; // wy
+    // _pinody->_qd(5) = _dy->_robot->_v_base[2]; // wz
+    // for (int i = 0; i < 19; i++)
+    // {
+    //     _pinody->_q(i + 7) = _dy->_q[i];
+    //     _pinody->_qd(i + 6) = _dy->_dq[i];
+    // }
 
     pinocchio::Model *model;
     pinocchio::Data *data;
     model = _pinody->_model;
     data = _pinody->_data;
 
-    pinocchio::forwardKinematics(*(model), *(data), _pinody->_q, _pinody->_qd);
-    pinocchio::framesForwardKinematics(*model, *data, _pinody->_q);
-    pinocchio::computeJointJacobians(*(model), *(data));
-    pinocchio::updateFramePlacements(*model, *data);
-    pinocchio::nonLinearEffects(*(model), *(data), _pinody->_q, _pinody->_qd);
-    pinocchio::crba(*model, *data, _pinody->_q);
-    pinocchio::computeJointJacobiansTimeVariation(*model, *data, _pinody->_q, _pinody->_qd);
+    // pinocchio::forwardKinematics(*(model), *(data), _pinody->_q, _pinody->_qd);
+    // pinocchio::framesForwardKinematics(*model, *data, _pinody->_q);
+    // pinocchio::computeJointJacobians(*(model), *(data));
+    // pinocchio::updateFramePlacements(*model, *data);
+    // pinocchio::nonLinearEffects(*(model), *(data), _pinody->_q, _pinody->_qd);
+    // pinocchio::crba(*model, *data, _pinody->_q);
+    // pinocchio::computeJointJacobiansTimeVariation(*model, *data, _pinody->_q, _pinody->_qd);
 
     _T_foot[0] = data->oMi[6];
     _T_foot[1] = data->oMi[11];
@@ -298,16 +298,16 @@ void WBC::friction_cone_task(VecInt2 contact)
         S_525_ext.block(i * 5, i * 5, 5, 5) = _S_525;
     }
     MatX B, beta;
-    B.setZero(9 * contact_num, 5 * contact_num);
-    beta.setZero(9 * contact_num, 1);
+    B.setZero(7 * contact_num, 5 * contact_num);
+    beta.setZero(7 * contact_num, 1);
     for (int i = 0; i < contact_num; i++)
     {
-        B.block(9 * i, 5 * i, 9, 5) = _Ffri;
-        beta.block(9 * i, 0, 9, 1) = _fri_beta;
+        B.block(7 * i, 5 * i, 7, 5) = _Ffri;
+        beta.block(7 * i, 0, 7, 1) = _fri_beta;
     }
 
     MatX brsR_1Qc_T;
-    brsR_1Qc_T.setZero(9 * contact_num, 25);
+    brsR_1Qc_T.setZero(7 * contact_num, 25);
     double R_det = _R.determinant();
     if (R_det *R_det < 0.1)
     {
@@ -316,11 +316,11 @@ void WBC::friction_cone_task(VecInt2 contact)
     brsR_1Qc_T = B * s_R_f_ext * S_525_ext * _R.inverse() * _Qc.transpose();
 
     MatX D, f;
-    D.setZero(9 * contact_num, 44);
-    f.setZero(9 * contact_num, 1);
+    D.setZero(7 * contact_num, 44);
+    f.setZero(7 * contact_num, 1);
 
-    D.block(0, 0, 9 * contact_num, 25) = brsR_1Qc_T * (-_H);
-    D.block(0, 25, 9 * contact_num, 19) = brsR_1Qc_T * _S.transpose();
+    D.block(0, 0, 7 * contact_num, 25) = brsR_1Qc_T * (-_H);
+    D.block(0, 25, 7 * contact_num, 19) = brsR_1Qc_T * _S.transpose();
 
     f = beta - brsR_1Qc_T * _C;
 
@@ -331,9 +331,7 @@ void WBC::friction_cone_task(VecInt2 contact)
 void WBC::set_contact_frition(double fri)
 {
     _frition = fri;
-    _Ffri << 1, 0, 0, 0, 0,
-        -1, 0, 0, 0, 0,
-        0, 1, 0, 0, 0,
+    _Ffri << 0, 1, 0, 0, 0,
         0, -1, 0, 0, 0,
         0, 0, -1, 0, -_frition,
         0, 0, 1, 0, -_frition,

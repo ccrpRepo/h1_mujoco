@@ -21,6 +21,7 @@ private:
     void calcQQd();
     void calcTau();
     bool checkStepOrNot();
+    void pin_init();
 
     GaitGenerator *_gait;
     Estimator *_est;
@@ -35,7 +36,7 @@ private:
     double _gaitHeight;
     Vec3 _posError, _velError;
     Mat3 _Kpp, _Kdp, _Kdw;
-    double _kpw;
+    Mat3 _kpw;
     Mat3 _KpSwing, _KdSwing;
     Vec2 _vxLim, _vyLim, _wyawLim;
     Vec2 *_phase;

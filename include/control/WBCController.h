@@ -72,9 +72,7 @@ public:
         _I_torque.setIdentity(19, 19);
 
         _frition = 0.35;
-        _Ffri << 1,  0,  0,  0,  0,
-                -1,  0,  0,  0,  0,
-                 0,  1,  0,  0,  0,
+        _Ffri << 0,  1,  0,  0,  0,
                  0, -1,  0,  0,  0,
                  0,  0, -1,  0, -_frition,
                  0,  0,  1,  0, -_frition,
@@ -82,7 +80,7 @@ public:
                  0,  0,  0,  1, -_frition,
                  0,  0,  0,  0, -1;
 
-        _fri_beta << 50, 50, 30, 30, 0, 0, 0, 0, 0;
+        _fri_beta << 30, 30, 0, 0, 0, 0, 0;
 
         _min_ident.setIdentity(44, 44);
         _min_ident = _min_ident * 0.001;
@@ -110,8 +108,8 @@ public:
     MatX _H, _H_fl, _C, _K, _k, _S, _G, _I_xy, _J_swingfoot, _I_yaw_height, _I_roll_pitch, _I_torque;
     MatX _g;
     double _frition;
-    Eigen::Matrix<double, 9, 5> _Ffri;
-    Eigen::Matrix<double, 9, 1> _fri_beta;
+    Eigen::Matrix<double, 7, 5> _Ffri;
+    Eigen::Matrix<double, 7, 1> _fri_beta;
     Eigen::Matrix<double, 44, 1> _qdd_torque;
     VecX _di;
 

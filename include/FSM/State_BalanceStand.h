@@ -12,8 +12,8 @@ public:
     void enter();
     void run();
     void exit();
+    void pin_init();
     FSMStateName checkChange();
-    
 
 private:
     Eigen::Matrix<double, 19, 1> _q_des, _qd_des;
