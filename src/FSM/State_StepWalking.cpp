@@ -19,8 +19,6 @@ State_StepWalking::State_StepWalking(CtrlComponents *ctrlComp)
     _Kdw = Vec3(100, 100, 50).asDiagonal(); //d rotate
     _KpSwing = Vec3(50, 50, 50).asDiagonal(); // 
     _KdSwing = Vec3(10, 10, 10).asDiagonal();// 
-    // _KpSwing.setZero();
-    // _KdSwing.setZero();
     _vxLim = _robot->getRobVelLimitX();
     _vyLim = _robot->getRobVelLimitY();
     _wyawLim = _robot->getRobVelLimitYaw();
@@ -410,14 +408,6 @@ void State_StepWalking::calcTau()
     _ddPcd = _Kpp * _posError + _Kdp * _velError;
     _dWbd = _kpw * rotMatToExp(_Rd * _G2B_RotMat) + _Kdw * (_wCmdGlobal - _lowState->getGyroGlobal());
 
-    // _ddPcd(0) = saturation(_ddPcd(0), Vec2(-3, 3));
-    // _ddPcd(1) = saturation(_ddPcd(1), Vec2(-3, 3));
-    // _ddPcd(2) = saturation(_ddPcd(2), Vec2(-5, 5));
-
-    // _dWbd(0) = saturation(_dWbd(0), Vec2(-40, 40));
-    // _dWbd(1) = saturation(_dWbd(1), Vec2(-40, 40));
-    // _dWbd(2) = saturation(_dWbd(2), Vec2(-10, 10));
-    // std::cout << "phase: " << (*_phase)(0)<<"|    ";
     _forceFeetGlobal.setZero();
     for (int i(0); i < 2; ++i)
     {
