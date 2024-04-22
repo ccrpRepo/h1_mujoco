@@ -57,7 +57,7 @@ void FSM::run()
                 << "Switched from " << _currentState->_stateNameString
                 << " to " << _nextState->_stateNameString << std::endl;
         }
-    }   
+    }
     else if (_mode == FSMMode::CHANGE)
     {
         _currentState->exit();

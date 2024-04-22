@@ -44,6 +44,8 @@ void GaitGenerator::run(Vec32 &feetPos, Vec32 &feetVel)
             {
                 _startP.col(i) = _est->getFootPos(i);
             }
+            // _startP.col(0)(1) = 0.2;
+            // _startP.col(1)(1) = -0.2;
             feetPos.col(i) = _startP.col(i);
             feetVel.col(i).setZero();
         }

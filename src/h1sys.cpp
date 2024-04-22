@@ -5,6 +5,7 @@
 #include <csignal>
 #include <sched.h>
 // #include <iomanip>
+#include <thread>
 
 
 #include "pinody/pinody.h"
@@ -14,7 +15,7 @@
 #include "control/CtrlComponents.h"
 #include "gait/WaveGenerator.h"
 
-
+#include "thirdParty/matplotlibcpp.h"
 
 using namespace std;
 
@@ -36,6 +37,7 @@ double lastx;
 double lasty;
 
 bool running = true;
+namespace plt = matplotlibcpp;
 
 void keyboard(GLFWwindow *window, int key, int scancode, int act, int mods)
 {
@@ -160,8 +162,6 @@ int main(int argc, char **argv)
 
     Pinody *pinody = new Pinody(model,data);
 
-    
-
     Init_window();
     ioInter = new IOmujoco(d,m);
     ctrlPlat = CtrlPlatform::MUJOCO;
@@ -172,14 +172,15 @@ int main(int argc, char **argv)
     ctrlComp->ctrlPlatform = ctrlPlat;
     ctrlComp->dt = 0.001; // run at 1000hz
     ctrlComp->running = &running;
-    ctrlComp->waveGen = new WaveGenerator(0.6, 0.55, Vec2(0, 0.45)); // Trot 0.45
+    ctrlComp->waveGen = new WaveGenerator(0.8, 0.55, Vec2(0, 0.45)); // Trot 0.45
     ctrlComp->geneObj();
     ControlFrame ctrlFrame(ctrlComp);
+
     while (running)
     {
         running = !glfwWindowShouldClose(window);
         mjtNum simstart = d->time;
-        while ((d->time - simstart) < 1.0 / 60.0)
+        while ((d->time - simstart) < 1.0 / 90.0)
         {
             ctrlFrame.run();
             mj_step(m, d);
@@ -189,7 +190,7 @@ int main(int argc, char **argv)
         glfwGetFramebufferSize(window, &viewport.width, &viewport.height);
 
         // update scene and render  更新场景并渲染
-        opt.frame = mjFRAME_WORLD; // 显示轴线
+        // opt.frame = mjFRAME_WORLD; // 显示轴线
         // cam.lookat[0] = d->qpos[0]; // 视角跟随物体的x轴
         mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
         mjr_render(viewport, &scn, &con);
@@ -200,6 +201,7 @@ int main(int argc, char **argv)
 
         // process pending GUI events, call GLFW callbacks
         glfwPollEvents();
+        // plt::show();
     }
 
     mjv_freeScene(&scn);

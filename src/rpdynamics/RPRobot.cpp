@@ -929,8 +929,8 @@ Vec32 h1Robot::getFeetPosIdeal()
 {
     Vec32 footEndIdea;
 
-    footEndIdea << 0.0395 - 0.09,  0.0395 - 0.09,
-                   0.2029 , -0.2029 , 
+    footEndIdea << 0.0395 - 0.12,  0.0395 - 0.12,
+                   0.2029 - 0.05 , -0.2029 + 0.05 , 
                   -0.9110, -0.9110;
 
     return footEndIdea;
@@ -1012,11 +1012,9 @@ Vec6 h1Robot::getFeet2BVelocity(int endid, Coordiante frame)
     {
         return twist;
     }
-    else if(frame == Coordiante::INERTIAL)
-    {
-        Mat4 T = Flt_Transform();
-        Mat6 X;
-        AdjointT(T, X);
-        return X * twist;
-    }
+
+    Mat4 T = Flt_Transform();
+    Mat6 X;
+    AdjointT(T, X);
+    return X * twist;
 }
